@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gocolly/colly"
 )
@@ -9,8 +10,21 @@ import (
 func main() {
 	c := colly.NewCollector()
 
-	c.OnHTML(".time_schedule_table", func(e *colly.HTMLElement) {
-		fmt.Print(e.Attr("class"))
+	c.OnHTML("div.time_schedule_table", func(tableDiv *colly.HTMLElement) {
+		location := strings.TrimSuffix(tableDiv.ChildText("h3 > span"), ":")
+		fmt.Println(location)
+
+		tableDiv.ForEach("table tr", func(rowNum int, row *colly.HTMLElement) {
+			if rowNum == 0 {
+				return
+			}
+
+			fmt.Printf("%s\t", row.ChildText("td:nth-child(2)"))
+			fmt.Printf("%s\t", row.ChildText("td:nth-child(3)"))
+			fmt.Printf("%s\t", row.ChildText("td:nth-child(4)"))
+			fmt.Printf("%s\t", row.ChildText("td:nth-child(5)"))
+			fmt.Printf("%s\n", row.ChildText("td:nth-child(6)"))
+		})
 	})
 
 	c.OnRequest(func(r *colly.Request) {
