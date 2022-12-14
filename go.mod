@@ -1,4 +1,4 @@
-module github/mattfan00/nycvbtracker
+module github.com/mattfan00/nycvbtracker
 
 go 1.19
 
