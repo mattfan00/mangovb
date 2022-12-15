@@ -1,8 +1,6 @@
-package main
+package vb
 
-import (
-	"time"
-)
+import "time"
 
 type Event struct {
 	Name        string
@@ -16,10 +14,4 @@ type Event struct {
 	SpotsLeft   int
 	Url         string
 	Source      string
-}
-
-func main() {
-	collector := initCollector()
-
-	collector.Visit("https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1")
 }
