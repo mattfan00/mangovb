@@ -1,4 +1,4 @@
-package nyurban
+package engine
 
 import (
 	"log"
@@ -13,20 +13,20 @@ import (
 	"github.com/mattfan00/nycvbtracker/pkg/query"
 )
 
-type NyurbanService struct {
+type NyurbanEngine struct {
 	query *query.Query
 }
 
-func NewService(client *http.Client) *NyurbanService {
+func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
 	q := query.New(client)
 	q.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1"
 
-	return &NyurbanService{
+	return &NyurbanEngine{
 		query: q,
 	}
 }
 
-func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
+func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 	events := []vb.Event{}
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
@@ -44,6 +44,7 @@ func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
 		price, err := strconv.ParseFloat(row.Find("td:nth-child(5)").Text(), 64)
 		if err != nil {
 			log.Println(err)
+			return
 		} else {
 			e.Price = price
 		}
@@ -51,6 +52,7 @@ func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
 		parsedStartDate, err := time.Parse("Mon 01/02", strings.TrimSpace(row.Find("td:nth-child(2)").Text()))
 		if err != nil {
 			log.Println(err)
+			return
 		} else {
 			currentTime := time.Now()
 			eventYear := currentTime.Year()
@@ -77,6 +79,7 @@ func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
 		parsedStartTime, err := time.Parse("3:04 pm", rawStartTime)
 		if err != nil {
 			log.Println(err)
+			return
 		} else {
 			e.StartTime = parsedStartTime.Format("15:04")
 		}
@@ -84,6 +87,7 @@ func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
 		parsedEndTime, err := time.Parse("3:04 pm", rawEndTime)
 		if err != nil {
 			log.Println(err)
+			return
 		} else {
 			e.EndTime = parsedEndTime.Format("15:04")
 		}
@@ -101,16 +105,17 @@ func (n *NyurbanService) parse(doc *goquery.Document) ([]vb.Event, error) {
 			e.SpotsLeft, err = strconv.Atoi(rawSpotsLeft)
 			if err != nil {
 				log.Println(err)
+				return
 			}
 		}
 
 		events = append(events, e)
 	})
 
-	return events, nil
+	return events
 }
 
-func (n *NyurbanService) Scrape() ([]vb.Event, error) {
+func (n *NyurbanEngine) Run() ([]vb.Event, error) {
 	docs, err := n.query.VisitMulitple([]string{
 		"https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1",
 	})
@@ -121,10 +126,7 @@ func (n *NyurbanService) Scrape() ([]vb.Event, error) {
 	allEvents := []vb.Event{}
 
 	for _, doc := range docs {
-		events, err := n.parse(doc)
-		if err != nil {
-			return []vb.Event{}, err
-		}
+		events := n.parse(doc)
 
 		allEvents = append(allEvents, events...)
 	}
