@@ -39,80 +39,85 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 
 		e := vb.Event{}
 		e.Location = location
-		e.Name = row.Find("td:nth-child(3)").Text()
 
-		price, err := strconv.ParseFloat(row.Find("td:nth-child(5)").Text(), 64)
+		err := n.parseRow(row, &e)
 		if err != nil {
-			log.Println(err)
-			return
-		} else {
-			e.Price = price
-		}
-
-		parsedStartDate, err := time.Parse("Mon 01/02", strings.TrimSpace(row.Find("td:nth-child(2)").Text()))
-		if err != nil {
-			log.Println(err)
-			return
-		} else {
-			currentTime := time.Now()
-			eventYear := currentTime.Year()
-
-			// if the parsed month is less than the current month, that means the
-			// event takes place in the next year
-			if parsedStartDate.Month() < currentTime.Month() {
-				eventYear = currentTime.Year() + 1
-			}
-
-			e.StartDate = time.Date(
-				eventYear,
-				parsedStartDate.Month(),
-				parsedStartDate.Day(),
-				0, 0, 0, 0,
-				parsedStartDate.Location(),
-			)
-		}
-
-		rawTimesSplit := strings.Split(row.Find("td:nth-child(4)").Text(), "-")
-		rawStartTime := strings.Trim(rawTimesSplit[0], " ")
-		rawEndTime := strings.Trim(rawTimesSplit[1], " ")
-
-		parsedStartTime, err := time.Parse("3:04 pm", rawStartTime)
-		if err != nil {
-			log.Println(err)
-			return
-		} else {
-			e.StartTime = parsedStartTime.Format("15:04")
-		}
-
-		parsedEndTime, err := time.Parse("3:04 pm", rawEndTime)
-		if err != nil {
-			log.Println(err)
-			return
-		} else {
-			e.EndTime = parsedEndTime.Format("15:04")
-		}
-
-		rawAvail := strings.TrimSpace(row.Find("td:nth-child(6)").Text())
-		if rawAvail == "Yes" {
-			e.IsAvailable = true
-		} else if rawAvail == "Sold Out" {
-			e.IsAvailable = false
-		} else if strings.Contains(strings.ToLower(rawAvail), "space") {
-			re := regexp.MustCompile("[0-9]+")
-			rawSpotsLeft := re.FindString(rawAvail)
-
-			e.IsAvailable = true
-			e.SpotsLeft, err = strconv.Atoi(rawSpotsLeft)
-			if err != nil {
-				log.Println(err)
-				return
-			}
+			log.Printf("Error parsing %+v: %s", e, err.Error())
 		}
 
 		events = append(events, e)
 	})
 
 	return events
+}
+
+func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error {
+	event.Name = row.Find("td:nth-child(3)").Text()
+
+	price, err := strconv.ParseFloat(row.Find("td:nth-child(5)").Text(), 64)
+	if err != nil {
+		return err
+	} else {
+		event.Price = price
+	}
+
+	parsedStartDate, err := time.Parse("Mon 01/02", strings.TrimSpace(row.Find("td:nth-child(2)").Text()))
+	if err != nil {
+		return err
+	} else {
+		currentTime := time.Now()
+		eventYear := currentTime.Year()
+
+		// if the parsed month is less than the current month, that means the
+		// event takes place in the next year
+		if parsedStartDate.Month() < currentTime.Month() {
+			eventYear = currentTime.Year() + 1
+		}
+
+		event.StartDate = time.Date(
+			eventYear,
+			parsedStartDate.Month(),
+			parsedStartDate.Day(),
+			0, 0, 0, 0,
+			parsedStartDate.Location(),
+		)
+	}
+
+	rawTimesSplit := strings.Split(row.Find("td:nth-child(4)").Text(), "-")
+	rawStartTime := strings.Trim(rawTimesSplit[0], " ")
+	rawEndTime := strings.Trim(rawTimesSplit[1], " ")
+
+	parsedStartTime, err := time.Parse("3:04 pm", rawStartTime)
+	if err != nil {
+		return err
+	} else {
+		event.StartTime = parsedStartTime.Format("15:04")
+	}
+
+	parsedEndTime, err := time.Parse("3:04 pm", rawEndTime)
+	if err != nil {
+		return err
+	} else {
+		event.EndTime = parsedEndTime.Format("15:04")
+	}
+
+	rawAvail := strings.TrimSpace(row.Find("td:nth-child(6)").Text())
+	if rawAvail == "Yes" {
+		event.IsAvailable = true
+	} else if rawAvail == "Sold Out" {
+		event.IsAvailable = false
+	} else if strings.Contains(strings.ToLower(rawAvail), "space") {
+		re := regexp.MustCompile("[0-9]+")
+		rawSpotsLeft := re.FindString(rawAvail)
+
+		event.IsAvailable = true
+		event.SpotsLeft, err = strconv.Atoi(rawSpotsLeft)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (n *NyurbanEngine) Run() ([]vb.Event, error) {
