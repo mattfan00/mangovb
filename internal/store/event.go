@@ -1,8 +1,10 @@
 package store
 
 import (
-	"github.com/jmoiron/sqlx"
 	vb "github.com/mattfan00/nycvbtracker"
+
+	sq "github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 )
 
 type EventStore struct {
@@ -16,16 +18,18 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 }
 
 func (es *EventStore) InsertMultiple(events []vb.Event) error {
+	baseInsert := sq.
+		Insert("event").
+		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url")
+
 	tx, err := es.db.Beginx()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	stmt := "INSERT INTO event VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-
 	for _, event := range events {
-		_, err = tx.Exec(stmt,
+		stmt, args, err := baseInsert.Values(
 			event.Id,
 			event.Source,
 			event.Name,
@@ -37,7 +41,12 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 			event.IsAvailable,
 			event.SpotsLeft,
 			event.Url,
-		)
+		).ToSql()
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Exec(stmt, args...)
 		if err != nil {
 			return err
 		}
