@@ -10,11 +10,13 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	vb "github.com/mattfan00/nycvbtracker"
+	"github.com/mattfan00/nycvbtracker/internal/hash"
 	"github.com/mattfan00/nycvbtracker/pkg/query"
 )
 
 type NyurbanEngine struct {
-	query *query.Query
+	query  *query.Query
+	source string
 }
 
 func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
@@ -22,7 +24,8 @@ func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
 	q.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1"
 
 	return &NyurbanEngine{
-		query: q,
+		query:  q,
+		source: "nyurban",
 	}
 }
 
@@ -38,12 +41,21 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 		}
 
 		e := vb.Event{}
+		e.Source = n.source
 		e.Location = location
 
 		err := n.parseRow(row, &e)
 		if err != nil {
 			log.Printf("Error parsing %+v: %s", e, err.Error())
+			return
 		}
+
+		hashedEvent, err := hash.HashEvent(e)
+		if err != nil {
+			log.Printf("Error hashing %+v: %s", e, err.Error())
+			return
+		}
+		e.Id = hashedEvent
 
 		events = append(events, e)
 	})
@@ -64,24 +76,23 @@ func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 	parsedStartDate, err := time.Parse("Mon 01/02", strings.TrimSpace(row.Find("td:nth-child(2)").Text()))
 	if err != nil {
 		return err
-	} else {
-		currentTime := time.Now()
-		eventYear := currentTime.Year()
-
-		// if the parsed month is less than the current month, that means the
-		// event takes place in the next year
-		if parsedStartDate.Month() < currentTime.Month() {
-			eventYear = currentTime.Year() + 1
-		}
-
-		event.StartDate = time.Date(
-			eventYear,
-			parsedStartDate.Month(),
-			parsedStartDate.Day(),
-			0, 0, 0, 0,
-			parsedStartDate.Location(),
-		)
 	}
+	currentTime := time.Now()
+	eventYear := currentTime.Year()
+
+	// if the parsed month is less than the current month, that means the
+	// event takes place in the next year
+	if parsedStartDate.Month() < currentTime.Month() {
+		eventYear = currentTime.Year() + 1
+	}
+
+	event.StartDate = time.Date(
+		eventYear,
+		parsedStartDate.Month(),
+		parsedStartDate.Day(),
+		0, 0, 0, 0,
+		parsedStartDate.Location(),
+	)
 
 	rawTimesSplit := strings.Split(row.Find("td:nth-child(4)").Text(), "-")
 	rawStartTime := strings.Trim(rawTimesSplit[0], " ")
@@ -90,16 +101,14 @@ func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 	parsedStartTime, err := time.Parse("3:04 pm", rawStartTime)
 	if err != nil {
 		return err
-	} else {
-		event.StartTime = parsedStartTime.Format("15:04")
 	}
+	event.StartTime = parsedStartTime.Format("15:04")
 
 	parsedEndTime, err := time.Parse("3:04 pm", rawEndTime)
 	if err != nil {
 		return err
-	} else {
-		event.EndTime = parsedEndTime.Format("15:04")
 	}
+	event.EndTime = parsedEndTime.Format("15:04")
 
 	rawAvail := strings.TrimSpace(row.Find("td:nth-child(6)").Text())
 	if rawAvail == "Yes" {

@@ -57,5 +57,9 @@ func (s *Scraper) Scrape() {
 
 	for _, event := range allEvents {
 		fmt.Printf("%+v\n", event)
+		err := s.eventStore.Insert(event)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

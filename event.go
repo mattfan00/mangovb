@@ -3,6 +3,7 @@ package vb
 import "time"
 
 type Event struct {
+	Id          string
 	Name        string
 	Location    string
 	StartDate   time.Time
