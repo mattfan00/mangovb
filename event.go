@@ -15,4 +15,5 @@ type Event struct {
 	SpotsLeft   int
 	Url         string
 	Source      string
+	ScrapedOn   time.Time
 }

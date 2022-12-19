@@ -20,7 +20,7 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 func (es *EventStore) InsertMultiple(events []vb.Event) error {
 	baseInsert := sq.
 		Insert("event").
-		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url")
+		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "scraped_on")
 
 	tx, err := es.db.Beginx()
 	if err != nil {
@@ -41,6 +41,7 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 			event.IsAvailable,
 			event.SpotsLeft,
 			event.Url,
+			event.ScrapedOn,
 		).ToSql()
 		if err != nil {
 			return err

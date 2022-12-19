@@ -31,6 +31,7 @@ func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
 
 func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 	events := []vb.Event{}
+	scrapedOn := time.Now()
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
 	location := strings.TrimSuffix(tableDiv.Find("h3 > span").Text(), ":")
@@ -56,6 +57,7 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 			return
 		}
 		e.Id = hashedEvent
+		e.ScrapedOn = scrapedOn
 
 		events = append(events, e)
 	})
