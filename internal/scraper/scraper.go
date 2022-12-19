@@ -55,12 +55,23 @@ func (s *Scraper) Scrape() {
 		}
 	}
 
+	ids := []string{}
 	for _, event := range allEvents {
-		fmt.Printf("%+v\n", event)
+		ids = append(ids, event.Id)
 	}
 
 	err := s.eventStore.InsertMultiple(allEvents)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	latestEvents, err := s.eventStore.GetLatestByIds(ids)
+	if err != nil {
+		fmt.Println("in here")
+		log.Fatal(err)
+	}
+
+	for _, event := range latestEvents {
+		fmt.Printf("%+v\n", event)
 	}
 }
