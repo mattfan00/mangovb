@@ -58,7 +58,7 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 	return err
 }
 
-func (es *EventStore) GetLatestByIds(ids []string) ([]vb.Event, error) {
+func (es *EventStore) GetLatestByIds(ids []string) (map[string]vb.Event, error) {
 	subquery := sq.Select().
 		Column("*").
 		Column("ROW_NUMBER() OVER (PARTITION BY ID ORDER BY scraped_on DESC) AS rn").
@@ -73,14 +73,19 @@ func (es *EventStore) GetLatestByIds(ids []string) ([]vb.Event, error) {
 		}).
 		ToSql()
 	if err != nil {
-		return []vb.Event{}, err
+		return map[string]vb.Event{}, err
 	}
 
 	events := []vb.Event{}
 	err = es.db.Select(&events, stmt, args...)
 	if err != nil {
-		return []vb.Event{}, err
+		return map[string]vb.Event{}, err
 	}
 
-	return events, nil
+	eventMap := map[string]vb.Event{}
+	for _, event := range events {
+		eventMap[event.Id] = event
+	}
+
+	return eventMap, nil
 }
