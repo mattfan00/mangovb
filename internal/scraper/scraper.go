@@ -69,22 +69,8 @@ func (s *Scraper) Scrape() {
 	notifs := []vb.Notification{}
 	for i := range parsedEvents {
 		parsedEvent := &parsedEvents[i]
-		if foundEvent, found := latestEvents[parsedEvent.Id]; found {
-			// TODO: revise LimitedSpots notification logic
-			if parsedEvent.IsAvailable &&
-				foundEvent.IsAvailable &&
-				parsedEvent.SpotsLeft < foundEvent.SpotsLeft &&
-				parsedEvent.SpotsLeft < 10 {
-				notifs = append(notifs, vb.Notification{
-					Type:  vb.LimitedSpots,
-					Event: parsedEvent,
-				})
-			}
-		} else {
-			notifs = append(notifs, vb.Notification{
-				Type:  vb.NewEvent,
-				Event: parsedEvent,
-			})
+		if notif, created := createNotification(parsedEvent, latestEvents); created {
+			notifs = append(notifs, notif)
 		}
 	}
 
@@ -96,4 +82,23 @@ func (s *Scraper) Scrape() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func createNotification(e *vb.Event, latestEvents map[string]vb.Event) (vb.Notification, bool) {
+	if _, found := latestEvents[e.Id]; found {
+		// TODO: revise LimitedSpots notification logic
+		if e.IsAvailable && e.SpotsLeft < 10 {
+			return vb.Notification{
+				Type:  vb.LimitedSpots,
+				Event: e,
+			}, true
+		}
+	} else {
+		return vb.Notification{
+			Type:  vb.NewEvent,
+			Event: e,
+		}, true
+	}
+
+	return vb.Notification{}, false
 }
