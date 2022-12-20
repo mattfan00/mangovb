@@ -18,3 +18,15 @@ type Event struct {
 	Source      string    `db:"source"`
 	ScrapedOn   time.Time `db:"scraped_on"`
 }
+
+type NotificationType int
+
+const (
+	NewEvent NotificationType = iota
+	LimitedSpots
+)
+
+type Notification struct {
+	Type  NotificationType
+	Event *Event
+}

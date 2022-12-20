@@ -44,25 +44,20 @@ func (s *Scraper) RegisterEngine(engines ...engine.Engine) {
 }
 
 func (s *Scraper) Scrape() {
-	allEvents := []vb.Event{}
+	parsedEvents := []vb.Event{}
 
 	for _, engine := range s.engines {
 		events, err := engine.Run()
 		if err != nil {
 			log.Println(err)
 		} else {
-			allEvents = append(allEvents, events...)
+			parsedEvents = append(parsedEvents, events...)
 		}
 	}
 
 	ids := []string{}
-	for _, event := range allEvents {
+	for _, event := range parsedEvents {
 		ids = append(ids, event.Id)
-	}
-
-	err := s.eventStore.InsertMultiple(allEvents)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	latestEvents, err := s.eventStore.GetLatestByIds(ids)
@@ -71,7 +66,34 @@ func (s *Scraper) Scrape() {
 		log.Fatal(err)
 	}
 
-	for _, event := range latestEvents {
-		fmt.Printf("%+v\n", event)
+	notifs := []vb.Notification{}
+	for i := range parsedEvents {
+		parsedEvent := &parsedEvents[i]
+		if foundEvent, found := latestEvents[parsedEvent.Id]; found {
+			// TODO: revise LimitedSpots notification logic
+			if parsedEvent.IsAvailable &&
+				foundEvent.IsAvailable &&
+				parsedEvent.SpotsLeft < foundEvent.SpotsLeft &&
+				parsedEvent.SpotsLeft < 10 {
+				notifs = append(notifs, vb.Notification{
+					Type:  vb.LimitedSpots,
+					Event: parsedEvent,
+				})
+			}
+		} else {
+			notifs = append(notifs, vb.Notification{
+				Type:  vb.NewEvent,
+				Event: parsedEvent,
+			})
+		}
+	}
+
+	for _, notif := range notifs {
+		fmt.Printf("%d - %+v\n", notif.Type, *notif.Event)
+	}
+
+	err = s.eventStore.InsertMultiple(parsedEvents)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
