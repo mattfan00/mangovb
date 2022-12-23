@@ -5,6 +5,7 @@ import (
 	"log"
 
 	vb "github.com/mattfan00/nycvbtracker"
+	"github.com/mattfan00/nycvbtracker/internal/bot"
 	"github.com/mattfan00/nycvbtracker/internal/engine"
 	"github.com/mattfan00/nycvbtracker/internal/store"
 	"github.com/mattfan00/nycvbtracker/pkg/query"
@@ -15,11 +16,12 @@ import (
 
 type Scraper struct {
 	db         *sqlx.DB
+	bot        *bot.Bot
 	eventStore *store.EventStore
 	engines    []engine.Engine
 }
 
-func Default() (*Scraper, error) {
+func New(bot *bot.Bot) (*Scraper, error) {
 	db, err := sqlx.Connect("sqlite3", viper.GetString("db_conn"))
 	if err != nil {
 		return nil, err
@@ -32,7 +34,9 @@ func Default() (*Scraper, error) {
 
 	scraper := &Scraper{
 		db:         db,
+		bot:        bot,
 		eventStore: eventStore,
+		engines:    []engine.Engine{},
 	}
 	scraper.RegisterEngine(engine.NewNyurbanEngine(client))
 
@@ -66,7 +70,7 @@ func (s *Scraper) Scrape() {
 		log.Fatal(err)
 	}
 
-	notifs := []vb.Notification{}
+	notifs := []*vb.Notification{}
 	for i := range parsedEvents {
 		parsedEvent := &parsedEvents[i]
 		if notif, created := createNotification(parsedEvent, latestEvents); created {
@@ -74,9 +78,7 @@ func (s *Scraper) Scrape() {
 		}
 	}
 
-	for _, notif := range notifs {
-		fmt.Printf("%d - %+v\n", notif.Type, *notif.Event)
-	}
+	s.bot.NotifyAllChannels(notifs)
 
 	err = s.eventStore.InsertMultiple(parsedEvents)
 	if err != nil {
@@ -84,21 +86,21 @@ func (s *Scraper) Scrape() {
 	}
 }
 
-func createNotification(e *vb.Event, latestEvents map[string]vb.Event) (vb.Notification, bool) {
+func createNotification(e *vb.Event, latestEvents map[string]vb.Event) (*vb.Notification, bool) {
 	if _, found := latestEvents[e.Id]; found {
 		// TODO: revise LimitedSpots notification logic
 		if e.IsAvailable && e.SpotsLeft < 10 {
-			return vb.Notification{
+			return &vb.Notification{
 				Type:  vb.LimitedSpots,
 				Event: e,
 			}, true
 		}
 	} else {
-		return vb.Notification{
+		return &vb.Notification{
 			Type:  vb.NewEvent,
 			Event: e,
 		}, true
 	}
 
-	return vb.Notification{}, false
+	return &vb.Notification{}, false
 }

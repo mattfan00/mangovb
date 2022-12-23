@@ -2,53 +2,85 @@ package bot
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/bwmarrin/discordgo"
+	vb "github.com/mattfan00/nycvbtracker"
 	"github.com/spf13/viper"
 )
 
-func Default() (*discordgo.Session, error) {
-	bot, err := discordgo.New("Bot " + viper.GetString("bot_token"))
+type Bot struct {
+	Session  *discordgo.Session
+	Channels []*Channel
+}
+
+type Channel struct {
+	Id      string
+	GuildId string
+}
+
+func New() (*Bot, error) {
+	s, err := discordgo.New("Bot " + viper.GetString("bot_token"))
 	if err != nil {
 		return nil, err
 	}
 
-	bot.Identify.Intents = discordgo.IntentsGuilds
+	s.Identify.Intents = discordgo.IntentsGuilds
 
-	bot.AddHandler(ready)
-	bot.AddHandler(guildCreate)
+	bot := &Bot{
+		Session:  s,
+		Channels: []*Channel{},
+	}
+
+	bot.Session.AddHandler(bot.ready)
+	bot.Session.AddHandler(bot.guildCreate)
 
 	return bot, nil
 }
 
-func ready(s *discordgo.Session, event *discordgo.Ready) {
+func (b *Bot) ready(s *discordgo.Session, event *discordgo.Ready) {
 	s.UpdateGameStatus(0, "volleyball")
 }
 
-func guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
-	fmt.Println(guild.ID)
-	fmt.Println(guild.Name)
-	fmt.Println(guild.Permissions)
+func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
+	fmt.Println("this is executing")
+	if guild.Unavailable {
+		return
+	}
 
 	for _, channel := range guild.Channels {
-		fmt.Printf("channel ID: %s\t", channel.ID)
-		fmt.Printf("channel name: %s\t", channel.Name)
-		fmt.Printf("channel type: %d\n", channel.Type)
+		if channel.Name == "volleyball-events" {
+			b.Channels = append(b.Channels, &Channel{
+				Id:      channel.ID,
+				GuildId: guild.ID,
+			})
+			return
+		}
 	}
 
-	categoryChannel, err := s.GuildChannelCreate(guild.ID, "volleyball-events", 4)
+	// create volleyball-events channel if it doesn't exist
+	newChannel, err := s.GuildChannelCreate(guild.ID, "volleyball-events", 0)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
-
-	advancedChannel, err := s.GuildChannelCreateComplex(guild.ID, discordgo.GuildChannelCreateData{
-		Name:     "advanced",
-		Type:     0,
-		ParentID: categoryChannel.ID,
+	b.Channels = append(b.Channels, &Channel{
+		Id:      newChannel.ID,
+		GuildId: guild.ID,
 	})
-	if err != nil {
-		panic(err)
+
+	s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
+}
+
+func (b *Bot) NotifyAllChannels(notifs []*vb.Notification) {
+	m := ""
+	for _, notif := range notifs {
+		m += fmt.Sprintf("%d - %+v\n", notif.Type, notif.Event)
 	}
 
-	s.ChannelMessageSend(advancedChannel.ID, "hello")
+	for _, channel := range b.Channels {
+		_, err := b.Session.ChannelMessageSend(channel.Id, m)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

@@ -20,25 +20,24 @@ func main() {
 	err := viper.ReadInConfig()
 	checkErr(err)
 
-	_, err = scraper.Default()
+	bot, err := bot.New()
 	checkErr(err)
 
-	// scraper.Scrape()
-
-	bot, err := bot.Default()
+	err = bot.Session.Open()
 	checkErr(err)
 
-	err = bot.Open()
+	scraper, err := scraper.New(bot)
 	checkErr(err)
 
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	scraper.Scrape()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	// Cleanly close down the Discord session.
-	bot.Close()
+	bot.Session.Close()
 }
 
 func checkErr(err error) {
