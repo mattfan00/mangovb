@@ -17,7 +17,7 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 	}
 }
 
-func (es *EventStore) InsertMultiple(events []vb.Event) error {
+func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	baseInsert := sq.
 		Insert("event").
 		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on")
@@ -29,7 +29,31 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 	defer tx.Rollback()
 
 	for _, event := range events {
-		stmt, args, err := baseInsert.Values(
+		stmt, args, err := sq.
+			Update("event").
+			SetMap(sq.Eq{
+				"name":         event.Name,
+				"location":     event.Location,
+				"start_date":   event.StartDate,
+				"start_time":   event.StartTime,
+				"end_time":     event.EndTime,
+				"price":        event.Price,
+				"is_available": event.IsAvailable,
+				"spots_left":   event.SpotsLeft,
+				"updated_on":   event.UpdatedOn,
+			}).
+			Where(sq.Eq{"id": event.Id}).
+			ToSql()
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Exec(stmt, args...)
+		if err != nil {
+			return err
+		}
+
+		stmt, args, err = baseInsert.Values(
 			event.Id,
 			event.Source,
 			event.Name,

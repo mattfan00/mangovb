@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"fmt"
 	"log"
 
 	vb "github.com/mattfan00/nycvbtracker"
@@ -64,9 +63,8 @@ func (s *Scraper) Scrape() {
 		ids = append(ids, event.Id)
 	}
 
-	latestEvents, err := s.eventStore.GetLatestByIds(ids)
+	_, err := s.eventStore.GetLatestByIds(ids)
 	if err != nil {
-		fmt.Println("in here")
 		log.Fatal(err)
 	}
 
@@ -80,7 +78,7 @@ func (s *Scraper) Scrape() {
 
 	s.bot.NotifyAllChannels(notifs)
 
-	err = s.eventStore.InsertMultiple(parsedEvents)
+	err = s.eventStore.UpsertMultiple(parsedEvents)
 	if err != nil {
 		log.Fatal(err)
 	}
