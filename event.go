@@ -16,7 +16,7 @@ type Event struct {
 	SpotsLeft   int       `db:"spots_left"`
 	Url         string    `db:"url"`
 	Source      string    `db:"source"`
-	ScrapedOn   time.Time `db:"scraped_on"`
+	UpdatedOn   time.Time `db:"updated_on"`
 }
 
 type NotificationType int

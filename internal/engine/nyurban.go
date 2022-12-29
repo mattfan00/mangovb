@@ -31,7 +31,7 @@ func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
 
 func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 	events := []vb.Event{}
-	scrapedOn := time.Now()
+	updatedOn := time.Now()
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
 	location := strings.TrimSuffix(tableDiv.Find("h3 > span").Text(), ":")
@@ -51,13 +51,8 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 			return
 		}
 
-		hashedEvent, err := hash.HashEvent(e)
-		if err != nil {
-			log.Printf("Error hashing %+v: %s", e, err.Error())
-			return
-		}
-		e.Id = hashedEvent
-		e.ScrapedOn = scrapedOn
+		e.Id = hash.Hash(e.Id)
+		e.UpdatedOn = updatedOn
 
 		events = append(events, e)
 	})
@@ -66,6 +61,10 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 }
 
 func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error {
+	if id, exists := row.Find("td:nth-child(1) input").Attr("value"); exists {
+		event.Id = id
+	}
+
 	event.Name = row.Find("td:nth-child(3)").Text()
 
 	price, err := strconv.ParseFloat(row.Find("td:nth-child(5)").Text(), 64)

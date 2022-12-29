@@ -20,7 +20,7 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 func (es *EventStore) InsertMultiple(events []vb.Event) error {
 	baseInsert := sq.
 		Insert("event").
-		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "scraped_on")
+		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on")
 
 	tx, err := es.db.Beginx()
 	if err != nil {
@@ -41,7 +41,7 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 			event.IsAvailable,
 			event.SpotsLeft,
 			event.Url,
-			event.ScrapedOn,
+			event.UpdatedOn,
 		).ToSql()
 		if err != nil {
 			return err
@@ -61,7 +61,7 @@ func (es *EventStore) InsertMultiple(events []vb.Event) error {
 func (es *EventStore) GetLatestByIds(ids []string) (map[string]vb.Event, error) {
 	subquery := sq.Select().
 		Column("*").
-		Column("ROW_NUMBER() OVER (PARTITION BY ID ORDER BY scraped_on DESC) AS rn").
+		Column("ROW_NUMBER() OVER (PARTITION BY ID ORDER BY updated_on DESC) AS rn").
 		From("event")
 
 	stmt, args, err := sq.Select().
