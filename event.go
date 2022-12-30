@@ -19,14 +19,16 @@ type Event struct {
 	UpdatedOn   time.Time `db:"updated_on"`
 }
 
-type NotificationType int
+type EventNotifType int
 
 const (
-	NewEvent NotificationType = iota
+	NewEvent EventNotifType = iota
 	LimitedSpots
 )
 
-type Notification struct {
-	Type  NotificationType
-	Event *Event
+type EventNotif struct {
+	Type      EventNotifType `db:"type"`
+	EventId   string         `db:"event_id"`
+	Event     Event
+	CreatedOn time.Time `db:"created_on"`
 }

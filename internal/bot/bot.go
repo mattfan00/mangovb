@@ -71,10 +71,21 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 	s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
 }
 
-func (b *Bot) NotifyAllChannels(notifs []*vb.Notification) {
+func (b *Bot) NotifyAllChannels(notifs []vb.EventNotif) {
+	if len(notifs) == 0 {
+		return
+	}
+
 	m := ""
 	for _, notif := range notifs {
-		m += fmt.Sprintf("%d - %+v\n", notif.Type, notif.Event)
+		switch notif.Type {
+		case vb.LimitedSpots:
+			m += "Limited spots"
+		case vb.NewEvent:
+			m += "New event"
+		}
+		m += " - "
+		m += fmt.Sprintf("%s on %s\n", notif.Event.Name, notif.Event.StartDate)
 	}
 
 	for _, channel := range b.Channels {
