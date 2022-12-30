@@ -63,7 +63,7 @@ func (s *Scraper) Scrape() {
 		ids = append(ids, event.Id)
 	}
 
-	_, err := s.eventStore.GetLatestByIds(ids)
+	latestEvents, err := s.eventStore.GetLatestByIds(ids)
 	if err != nil {
 		log.Fatal(err)
 	}
