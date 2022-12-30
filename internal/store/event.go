@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+
 	vb "github.com/mattfan00/nycvbtracker"
 
 	sq "github.com/Masterminds/squirrel"
@@ -20,7 +22,18 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	baseInsert := sq.
 		Insert("event").
-		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on")
+		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on").
+		Suffix(fmt.Sprintf("ON CONFLICT(id) DO UPDATE SET %s", setMap(map[string]interface{}{
+			"name":         "excluded.name",
+			"location":     "excluded.location",
+			"start_date":   "excluded.start_date",
+			"start_time":   "excluded.start_time",
+			"end_time":     "excluded.end_time",
+			"price":        "excluded.price",
+			"is_available": "excluded.is_available",
+			"spots_left":   "excluded.spots_left",
+			"updated_on":   "excluded.updated_on",
+		})))
 
 	tx, err := es.db.Beginx()
 	if err != nil {
@@ -29,31 +42,7 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	defer tx.Rollback()
 
 	for _, event := range events {
-		stmt, args, err := sq.
-			Update("event").
-			SetMap(sq.Eq{
-				"name":         event.Name,
-				"location":     event.Location,
-				"start_date":   event.StartDate,
-				"start_time":   event.StartTime,
-				"end_time":     event.EndTime,
-				"price":        event.Price,
-				"is_available": event.IsAvailable,
-				"spots_left":   event.SpotsLeft,
-				"updated_on":   event.UpdatedOn,
-			}).
-			Where(sq.Eq{"id": event.Id}).
-			ToSql()
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.Exec(stmt, args...)
-		if err != nil {
-			return err
-		}
-
-		stmt, args, err = baseInsert.Values(
+		stmt, args, err := baseInsert.Values(
 			event.Id,
 			event.Source,
 			event.Name,
@@ -85,7 +74,7 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 func (es *EventStore) GetLatestByIds(ids []string) (map[string]vb.Event, error) {
 	subquery := sq.Select().
 		Column("*").
-		Column("ROW_NUMBER() OVER (PARTITION BY ID ORDER BY updated_on DESC) AS rn").
+		Column("ROW_NUMBER() OVER (PARTITION BY id ORDER BY updated_on DESC) AS rn").
 		From("event")
 
 	stmt, args, err := sq.Select().
