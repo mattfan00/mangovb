@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -76,14 +75,6 @@ func (s *Scraper) Scrape() {
 	notifMap, err := s.eventNotifStore.GetByEventIds(ids)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	for key, value := range notifMap {
-		fmt.Printf("%s: ", key)
-		for _, notif := range value {
-			fmt.Printf("[%d] ", notif.Type)
-		}
-		fmt.Print("\n")
 	}
 
 	notifs := []vb.EventNotif{}

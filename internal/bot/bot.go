@@ -95,3 +95,13 @@ func (b *Bot) NotifyAllChannels(notifs []vb.EventNotif) {
 		}
 	}
 }
+
+func (b *Bot) Start() error {
+	err := b.Session.Open()
+
+	return err
+}
+
+func (b *Bot) Stop() {
+	b.Session.Close()
+}
