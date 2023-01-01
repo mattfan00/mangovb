@@ -8,6 +8,7 @@ import (
 	vb "github.com/mattfan00/nycvbtracker"
 	"github.com/mattfan00/nycvbtracker/internal/bot"
 	"github.com/mattfan00/nycvbtracker/internal/store"
+	"go.uber.org/multierr"
 )
 
 type Notifier struct {
@@ -57,7 +58,10 @@ func (n *Notifier) Notify() {
 		}
 
 		message := n.generateNotifMessage(notifs)
-		n.bot.SendMessageToAllChannels(message)
+		err = n.bot.SendMessageToAllChannels(message)
+		for _, err := range multierr.Errors(err) {
+			log.Println(err)
+		}
 	}
 }
 

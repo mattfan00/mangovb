@@ -1,10 +1,12 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
+	"go.uber.org/multierr"
 )
 
 type Bot struct {
@@ -69,15 +71,16 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 }
 
 func (b *Bot) SendMessageToAllChannels(message string) error {
+	var err error
 	for _, channel := range b.Channels {
-		_, err := b.Session.ChannelMessageSend(channel.Id, message)
-		if err != nil {
-			log.Println(err)
-		}
+		_, sendErr := b.Session.ChannelMessageSend(channel.Id, message)
+		err = multierr.Append(
+			err,
+			fmt.Errorf("cannot send message to channel %s: %w", channel.Id, sendErr),
+		)
 	}
 
-	// TODO: return multiple errors
-	return nil
+	return err
 }
 
 func (b *Bot) Start() error {
