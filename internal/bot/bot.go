@@ -1,11 +1,9 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
-	vb "github.com/mattfan00/nycvbtracker"
 	"github.com/spf13/viper"
 )
 
@@ -43,7 +41,6 @@ func (b *Bot) ready(s *discordgo.Session, event *discordgo.Ready) {
 }
 
 func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
-	fmt.Println("this is executing")
 	if guild.Unavailable {
 		return
 	}
@@ -71,29 +68,16 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 	s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
 }
 
-func (b *Bot) NotifyAllChannels(notifs []vb.EventNotif) {
-	if len(notifs) == 0 {
-		return
-	}
-
-	m := ""
-	for _, notif := range notifs {
-		switch notif.Type {
-		case vb.LimitedSpots:
-			m += "Limited spots"
-		case vb.NewEvent:
-			m += "New event"
-		}
-		m += " - "
-		m += fmt.Sprintf("%s on %s\n", notif.Event.Name, notif.Event.StartDate)
-	}
-
+func (b *Bot) SendMessageToAllChannels(message string) error {
 	for _, channel := range b.Channels {
-		_, err := b.Session.ChannelMessageSend(channel.Id, m)
+		_, err := b.Session.ChannelMessageSend(channel.Id, message)
 		if err != nil {
 			log.Println(err)
 		}
 	}
+
+	// TODO: return multiple errors
+	return nil
 }
 
 func (b *Bot) Start() error {

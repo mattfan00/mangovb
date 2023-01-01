@@ -2,48 +2,28 @@ package scraper
 
 import (
 	"log"
-	"time"
 
 	vb "github.com/mattfan00/nycvbtracker"
-	"github.com/mattfan00/nycvbtracker/internal/bot"
 	"github.com/mattfan00/nycvbtracker/internal/engine"
 	"github.com/mattfan00/nycvbtracker/internal/store"
 	"github.com/mattfan00/nycvbtracker/pkg/query"
-
-	"github.com/jmoiron/sqlx"
-	"github.com/spf13/viper"
 )
 
 type Scraper struct {
-	db              *sqlx.DB
-	bot             *bot.Bot
-	eventStore      *store.EventStore
-	eventNotifStore *store.EventNotifStore
-	engines         []engine.Engine
+	eventStore *store.EventStore
+	engines    []engine.Engine
 }
 
-func New(bot *bot.Bot) (*Scraper, error) {
-	db, err := sqlx.Connect("sqlite3", viper.GetString("db_conn"))
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Connected to %s", viper.GetString("db_conn"))
-
-	eventStore := store.NewEventStore(db)
-	eventNotifStore := store.NewEventNotifStore(db)
-
+func New(eventStore *store.EventStore) *Scraper {
 	client := query.DefaultClient()
 
 	scraper := &Scraper{
-		db:              db,
-		bot:             bot,
-		eventStore:      eventStore,
-		eventNotifStore: eventNotifStore,
-		engines:         []engine.Engine{},
+		eventStore: eventStore,
+		engines:    []engine.Engine{},
 	}
 	scraper.RegisterEngine(engine.NewNyurbanEngine(client))
 
-	return scraper, nil
+	return scraper
 }
 
 func (s *Scraper) RegisterEngine(engines ...engine.Engine) {
@@ -67,32 +47,34 @@ func (s *Scraper) Scrape() {
 		log.Fatal(err)
 	}
 
-	ids := make([]string, len(parsedEvents))
-	for i, event := range parsedEvents {
-		ids[i] = event.Id
-	}
-
-	notifMap, err := s.eventNotifStore.GetByEventIds(ids)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	notifs := []vb.EventNotif{}
-	notifCreatedOn := time.Now()
-	for i := range parsedEvents {
-		parsedEvent := parsedEvents[i]
-		if notif, created := createNotification(parsedEvent, notifMap); created {
-			notif.CreatedOn = notifCreatedOn
-			notifs = append(notifs, notif)
+	/*
+		ids := make([]string, len(parsedEvents))
+		for i, event := range parsedEvents {
+			ids[i] = event.Id
 		}
-	}
 
-	err = s.eventNotifStore.InsertMultiple(notifs)
-	if err != nil {
-		log.Fatal(err)
-	}
+		notifMap, err := s.eventNotifStore.GetByEventIds(ids)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	s.bot.NotifyAllChannels(notifs)
+		notifs := []vb.EventNotif{}
+		notifCreatedOn := time.Now()
+		for i := range parsedEvents {
+			parsedEvent := parsedEvents[i]
+			if notif, created := createNotification(parsedEvent, notifMap); created {
+				notif.CreatedOn = notifCreatedOn
+				notifs = append(notifs, notif)
+			}
+		}
+
+		err = s.eventNotifStore.InsertMultiple(notifs)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		s.bot.NotifyAllChannels(notifs)
+	*/
 }
 
 func createNotification(e vb.Event, notifMap map[string][]vb.EventNotif) (vb.EventNotif, bool) {

@@ -8,10 +8,13 @@ import (
 	"syscall"
 
 	"github.com/mattfan00/nycvbtracker/internal/bot"
+	"github.com/mattfan00/nycvbtracker/internal/notifier"
 	"github.com/mattfan00/nycvbtracker/internal/scraper"
-	"github.com/robfig/cron"
+	"github.com/mattfan00/nycvbtracker/internal/store"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/robfig/cron"
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +24,14 @@ func main() {
 
 	err := viper.ReadInConfig()
 	checkErr(err)
+
+	dbConn := viper.GetString("db_conn")
+	db, err := sqlx.Connect("sqlite3", dbConn)
+	checkErr(err)
+	log.Printf("Connected to %s", dbConn)
+
+	eventStore := store.NewEventStore(db)
+	eventNotifStore := store.NewEventNotifStore(db)
 
 	bot, err := bot.New()
 	checkErr(err)
@@ -32,13 +43,15 @@ func main() {
 		bot.Stop()
 	}()
 
-	scraper, err := scraper.New(bot)
-	checkErr(err)
+	scraper := scraper.New(eventStore)
+	notifier := notifier.New(bot, eventStore, eventNotifStore)
 
 	c := cron.New()
-	c.AddFunc("0 * * * * *", func() {
+	c.AddFunc("0 */10 * * * *", func() {
 		log.Println("Started scraping")
 		scraper.Scrape()
+
+		notifier.Notify()
 	})
 
 	c.Start()
