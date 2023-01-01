@@ -47,10 +47,13 @@ func main() {
 	notifier := notifier.New(bot, eventStore, eventNotifStore)
 
 	c := cron.New()
-	c.AddFunc("0 */10 * * * *", func() {
-		log.Println("Started scraping")
+	c.AddFunc(viper.GetString("cron_scrape"), func() {
+		log.Println("Started scraper")
 		scraper.Scrape()
+	})
 
+	c.AddFunc(viper.GetString("cron_notify"), func() {
+		log.Println("Started notifer")
 		notifier.Notify()
 	})
 
