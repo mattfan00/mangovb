@@ -3,10 +3,10 @@ package scraper
 import (
 	"log"
 
-	vb "github.com/mattfan00/nycvbtracker"
-	"github.com/mattfan00/nycvbtracker/internal/engine"
-	"github.com/mattfan00/nycvbtracker/internal/store"
-	"github.com/mattfan00/nycvbtracker/pkg/query"
+	vb "github.com/mattfan00/mangovb"
+	"github.com/mattfan00/mangovb/internal/engine"
+	"github.com/mattfan00/mangovb/internal/store"
+	"github.com/mattfan00/mangovb/pkg/query"
 )
 
 type Scraper struct {
@@ -21,7 +21,7 @@ func New(eventStore *store.EventStore) *Scraper {
 		eventStore: eventStore,
 		engines:    []engine.Engine{},
 	}
-	scraper.RegisterEngine(engine.NewNyurbanEngine(client))
+	scraper.RegisterEngine(engine.NewNyUrbanEngine(client))
 
 	return scraper
 }

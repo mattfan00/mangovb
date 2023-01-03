@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	vb "github.com/mattfan00/nycvbtracker"
-	"github.com/mattfan00/nycvbtracker/internal/bot"
-	"github.com/mattfan00/nycvbtracker/internal/store"
+	vb "github.com/mattfan00/mangovb"
+	"github.com/mattfan00/mangovb/internal/bot"
+	"github.com/mattfan00/mangovb/internal/store"
 	"go.uber.org/multierr"
 )
 
@@ -70,7 +70,7 @@ func (n *Notifier) createNotif(e vb.Event, notifMap map[string][]vb.EventNotif) 
 		if e.IsAvailable && e.SpotsLeft > 0 && e.SpotsLeft < 5 {
 			hasNotifiedLimitedSpots := false
 			for _, prevNotif := range prevNotifs {
-				if prevNotif.Type == vb.LimitedSpots {
+				if prevNotif.TypeId == vb.LimitedSpots {
 					hasNotifiedLimitedSpots = true
 				}
 			}
@@ -78,7 +78,7 @@ func (n *Notifier) createNotif(e vb.Event, notifMap map[string][]vb.EventNotif) 
 			// only notify if haven't notified limited spots in the past
 			if !hasNotifiedLimitedSpots {
 				return vb.EventNotif{
-					Type:    vb.LimitedSpots,
+					TypeId:  vb.LimitedSpots,
 					EventId: e.Id,
 					Event:   e,
 				}, true
@@ -86,7 +86,7 @@ func (n *Notifier) createNotif(e vb.Event, notifMap map[string][]vb.EventNotif) 
 		}
 	} else {
 		return vb.EventNotif{
-			Type:    vb.NewEvent,
+			TypeId:  vb.NewEvent,
 			EventId: e.Id,
 			Event:   e,
 		}, true
@@ -98,7 +98,7 @@ func (n *Notifier) createNotif(e vb.Event, notifMap map[string][]vb.EventNotif) 
 func (n *Notifier) generateNotifMessage(notifs []vb.EventNotif) string {
 	m := ""
 	for _, notif := range notifs {
-		switch notif.Type {
+		switch notif.TypeId {
 		case vb.LimitedSpots:
 			m += "Limited spots"
 		case vb.NewEvent:

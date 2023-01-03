@@ -2,8 +2,9 @@ package store
 
 import (
 	"fmt"
+	"time"
 
-	vb "github.com/mattfan00/nycvbtracker"
+	vb "github.com/mattfan00/mangovb"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -20,9 +21,11 @@ func NewEventStore(db *sqlx.DB) *EventStore {
 }
 
 func (es *EventStore) UpsertMultiple(events []vb.Event) error {
+	updatedOn := time.Now()
+
 	baseInsert := sq.
 		Insert("event").
-		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on").
+		Columns("id", "source_id", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on").
 		Suffix(fmt.Sprintf("ON CONFLICT(id) DO UPDATE SET %s", setMap(map[string]interface{}{
 			"name":         "excluded.name",
 			"location":     "excluded.location",
@@ -44,7 +47,7 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	for _, event := range events {
 		stmt, args, err := baseInsert.Values(
 			event.Id,
-			event.Source,
+			event.SourceId,
 			event.Name,
 			event.Location,
 			event.StartDate,
@@ -54,7 +57,7 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 			event.IsAvailable,
 			event.SpotsLeft,
 			event.Url,
-			event.UpdatedOn,
+			updatedOn,
 		).ToSql()
 		if err != nil {
 			return err
@@ -78,7 +81,7 @@ func (es *EventStore) GetLatest() ([]vb.Event, error) {
 		From("event")
 
 	stmt, args, err := sq.Select().
-		Columns("id", "source", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on").
+		Columns("id", "source_id", "name", "location", "start_date", "start_time", "end_time", "price", "is_available", "spots_left", "url", "updated_on").
 		FromSelect(subquery, "t").
 		Where(sq.And{
 			sq.Eq{"rn": 1},

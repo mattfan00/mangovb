@@ -3,7 +3,7 @@ package store
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
-	vb "github.com/mattfan00/nycvbtracker"
+	vb "github.com/mattfan00/mangovb"
 )
 
 type EventNotifStore struct {
@@ -19,7 +19,7 @@ func NewEventNotifStore(db *sqlx.DB) *EventNotifStore {
 func (ens *EventNotifStore) InsertMultiple(notifs []vb.EventNotif) error {
 	baseInsert := sq.
 		Insert("event_notif").
-		Columns("event_id", "type", "created_on")
+		Columns("event_id", "type_id", "created_on")
 
 	tx, err := ens.db.Beginx()
 	if err != nil {
@@ -30,7 +30,7 @@ func (ens *EventNotifStore) InsertMultiple(notifs []vb.EventNotif) error {
 	for _, notif := range notifs {
 		stmt, args, err := baseInsert.Values(
 			notif.EventId,
-			notif.Type,
+			notif.TypeId,
 			notif.CreatedOn,
 		).ToSql()
 		if err != nil {
@@ -50,7 +50,7 @@ func (ens *EventNotifStore) InsertMultiple(notifs []vb.EventNotif) error {
 
 func (ens *EventNotifStore) GetByEventIds(ids []string) (map[string][]vb.EventNotif, error) {
 	stmt, args, err := sq.
-		Select("event_id", "type", "created_on").
+		Select("event_id", "type_id", "created_on").
 		From("event_notif").
 		Where(sq.Eq{"event_id": ids}).
 		ToSql()

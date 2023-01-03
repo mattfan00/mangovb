@@ -9,29 +9,28 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	vb "github.com/mattfan00/nycvbtracker"
-	"github.com/mattfan00/nycvbtracker/internal/hash"
-	"github.com/mattfan00/nycvbtracker/pkg/query"
+	vb "github.com/mattfan00/mangovb"
+	"github.com/mattfan00/mangovb/internal/hash"
+	"github.com/mattfan00/mangovb/pkg/query"
 )
 
-type NyurbanEngine struct {
-	query  *query.Query
-	source string
+type NyUrbanEngine struct {
+	query    *query.Query
+	sourceId vb.EventSource
 }
 
-func NewNyurbanEngine(client *http.Client) *NyurbanEngine {
+func NewNyUrbanEngine(client *http.Client) *NyUrbanEngine {
 	q := query.New(client)
 	q.UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1"
 
-	return &NyurbanEngine{
-		query:  q,
-		source: "nyurban",
+	return &NyUrbanEngine{
+		query:    q,
+		sourceId: vb.NyUrban,
 	}
 }
 
-func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
+func (n *NyUrbanEngine) parse(doc *goquery.Document) []vb.Event {
 	events := []vb.Event{}
-	updatedOn := time.Now()
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
 	location := strings.TrimSuffix(tableDiv.Find("h3 > span").Text(), ":")
@@ -42,7 +41,7 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 		}
 
 		e := vb.Event{}
-		e.Source = n.source
+		e.SourceId = n.sourceId
 		e.Location = location
 
 		err := n.parseRow(row, &e)
@@ -52,7 +51,6 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 		}
 
 		e.Id = hash.Hash(e.Id)
-		e.UpdatedOn = updatedOn
 
 		events = append(events, e)
 	})
@@ -60,7 +58,7 @@ func (n *NyurbanEngine) parse(doc *goquery.Document) []vb.Event {
 	return events
 }
 
-func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error {
+func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error {
 	if id, exists := row.Find("td:nth-child(1) input").Attr("value"); exists {
 		event.Id = id
 	}
@@ -130,7 +128,7 @@ func (n *NyurbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 	return nil
 }
 
-func (n *NyurbanEngine) Run() ([]vb.Event, error) {
+func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
 	docs, err := n.query.VisitMulitple([]string{
 		"https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1",
 	})

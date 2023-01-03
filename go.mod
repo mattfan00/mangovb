@@ -1,4 +1,4 @@
-module github.com/mattfan00/nycvbtracker
+module github.com/mattfan00/mangovb
 
 go 1.19
 

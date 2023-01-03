@@ -74,10 +74,12 @@ func (b *Bot) SendMessageToAllChannels(message string) error {
 	var err error
 	for _, channel := range b.Channels {
 		_, sendErr := b.Session.ChannelMessageSend(channel.Id, message)
-		err = multierr.Append(
-			err,
-			fmt.Errorf("cannot send message to channel %s: %w", channel.Id, sendErr),
-		)
+		if sendErr != nil {
+			err = multierr.Append(
+				err,
+				fmt.Errorf("cannot send message to channel %s: %w", channel.Id, sendErr),
+			)
+		}
 	}
 
 	return err
