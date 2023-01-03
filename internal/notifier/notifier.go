@@ -9,6 +9,8 @@ import (
 	"github.com/mattfan00/mangovb/internal/bot"
 	"github.com/mattfan00/mangovb/internal/store"
 	"go.uber.org/multierr"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 type Notifier struct {
@@ -41,15 +43,7 @@ func (n *Notifier) Notify() {
 		log.Fatal(err)
 	}
 
-	notifs := []vb.EventNotif{}
-	notifCreatedOn := time.Now()
-	for i := range events {
-		event := events[i]
-		if notif, created := n.createNotif(event, notifMap); created {
-			notif.CreatedOn = notifCreatedOn
-			notifs = append(notifs, notif)
-		}
-	}
+	notifs := createNotifs(events, notifMap)
 
 	if len(notifs) > 0 {
 		err = n.eventNotifStore.InsertMultiple(notifs)
@@ -57,7 +51,7 @@ func (n *Notifier) Notify() {
 			log.Fatal(err)
 		}
 
-		message := n.generateNotifMessage(notifs)
+		message := generateNotifMessage(notifs)
 		err = n.bot.SendMessageToAllChannels(message)
 		for _, err := range multierr.Errors(err) {
 			log.Println(err)
@@ -65,37 +59,43 @@ func (n *Notifier) Notify() {
 	}
 }
 
-func (n *Notifier) createNotif(e vb.Event, notifMap map[string][]vb.EventNotif) (vb.EventNotif, bool) {
-	if prevNotifs, found := notifMap[e.Id]; found {
-		if e.IsAvailable && e.SpotsLeft > 0 && e.SpotsLeft < 5 {
-			hasNotifiedLimitedSpots := false
-			for _, prevNotif := range prevNotifs {
-				if prevNotif.TypeId == vb.LimitedSpots {
-					hasNotifiedLimitedSpots = true
-				}
-			}
+func createNotifs(events []vb.Event, notifMap map[string][]vb.EventNotif) []vb.EventNotif {
+	notifs := []vb.EventNotif{}
+	notifCreatedOn := time.Now()
 
-			// only notify if haven't notified limited spots in the past
-			if !hasNotifiedLimitedSpots {
-				return vb.EventNotif{
-					TypeId:  vb.LimitedSpots,
-					EventId: e.Id,
-					Event:   e,
-				}, true
-			}
+	for _, e := range events {
+		prevNotifs := notifMap[e.Id]
+		prevNotifIdSet := mapset.NewSet[vb.EventNotifType]()
+		for _, prevNotif := range prevNotifs {
+			prevNotifIdSet.Add(prevNotif.TypeId)
 		}
-	} else {
-		return vb.EventNotif{
-			TypeId:  vb.NewEvent,
-			EventId: e.Id,
-			Event:   e,
-		}, true
+
+		if !prevNotifIdSet.Contains(vb.NewEvent) {
+			notifs = append(notifs, vb.EventNotif{
+				TypeId:    vb.NewEvent,
+				EventId:   e.Id,
+				Event:     e,
+				CreatedOn: notifCreatedOn,
+			})
+		}
+
+		if !prevNotifIdSet.Contains(vb.LimitedSpots) &&
+			e.IsAvailable &&
+			e.SpotsLeft > 0 &&
+			e.SpotsLeft < 5 {
+			notifs = append(notifs, vb.EventNotif{
+				TypeId:    vb.LimitedSpots,
+				EventId:   e.Id,
+				Event:     e,
+				CreatedOn: notifCreatedOn,
+			})
+		}
 	}
 
-	return vb.EventNotif{}, false
+	return notifs
 }
 
-func (n *Notifier) generateNotifMessage(notifs []vb.EventNotif) string {
+func generateNotifMessage(notifs []vb.EventNotif) string {
 	m := ""
 	for _, notif := range notifs {
 		switch notif.TypeId {
