@@ -38,7 +38,7 @@ func (q *Query) Visit(url string) (*goquery.Document, error) {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("status code error: %d", res.StatusCode)
+		return nil, fmt.Errorf("status code is %d, not 200", res.StatusCode)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(res.Body)
@@ -47,19 +47,4 @@ func (q *Query) Visit(url string) (*goquery.Document, error) {
 	}
 
 	return doc, nil
-}
-
-func (q *Query) VisitMulitple(urls []string) ([]*goquery.Document, error) {
-	docs := []*goquery.Document{}
-
-	for _, url := range urls {
-		doc, err := q.Visit(url)
-		if err != nil {
-			return []*goquery.Document{}, err
-		}
-
-		docs = append(docs, doc)
-	}
-
-	return docs, nil
 }

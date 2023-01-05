@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -12,6 +11,8 @@ import (
 	vb "github.com/mattfan00/mangovb"
 	"github.com/mattfan00/mangovb/internal/hash"
 	"github.com/mattfan00/mangovb/pkg/query"
+
+	"go.uber.org/multierr"
 )
 
 type NyUrbanEngine struct {
@@ -29,12 +30,13 @@ func NewNyUrbanEngine(client *http.Client) *NyUrbanEngine {
 	}
 }
 
-func (n *NyUrbanEngine) parse(doc *goquery.Document) []vb.Event {
+func (n *NyUrbanEngine) parse(doc *goquery.Document) ([]vb.Event, error) {
 	events := []vb.Event{}
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
 	location := strings.TrimSuffix(tableDiv.Find("h3 > span").Text(), ":")
 
+	var err error
 	tableDiv.Find("table tr").Each(func(rowNum int, row *goquery.Selection) {
 		if rowNum == 0 {
 			return
@@ -44,18 +46,18 @@ func (n *NyUrbanEngine) parse(doc *goquery.Document) []vb.Event {
 		e.SourceId = n.sourceId
 		e.Location = location
 
-		err := n.parseRow(row, &e)
-		if err != nil {
-			log.Printf("Error parsing %+v: %s", e, err.Error())
-			return
-		}
+		parseErr := n.parseRow(row, &e)
 
 		e.Id = hash.Hash(e.Id)
 
-		events = append(events, e)
+		if parseErr != nil {
+			err = multierr.Append(err, ParseEventErr{e, parseErr})
+		} else {
+			events = append(events, e)
+		}
 	})
 
-	return events
+	return events, err
 }
 
 func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error {
@@ -129,20 +131,25 @@ func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 }
 
 func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
-	docs, err := n.query.VisitMulitple([]string{
+	var err error
+
+	urls := []string{
 		"https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1",
-	})
-	if err != nil {
-		return []vb.Event{}, err
 	}
 
 	allEvents := []vb.Event{}
+	for _, url := range urls {
+		doc, queryErr := n.query.Visit(url)
+		if queryErr != nil {
+			err = multierr.Append(err, QueryErr{url, queryErr})
+		} else {
+			events, parseErrs := n.parse(doc)
 
-	for _, doc := range docs {
-		events := n.parse(doc)
+			err = multierr.Append(err, parseErrs)
+			allEvents = append(allEvents, events...)
+		}
 
-		allEvents = append(allEvents, events...)
 	}
 
-	return allEvents, nil
+	return allEvents, err
 }

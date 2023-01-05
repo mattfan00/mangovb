@@ -7,6 +7,7 @@ import (
 	"github.com/mattfan00/mangovb/internal/engine"
 	"github.com/mattfan00/mangovb/internal/store"
 	"github.com/mattfan00/mangovb/pkg/query"
+	"go.uber.org/multierr"
 )
 
 type Scraper struct {
@@ -35,11 +36,11 @@ func (s *Scraper) Scrape() {
 
 	for _, engine := range s.engines {
 		events, err := engine.Run()
-		if err != nil {
+		for _, err := range multierr.Errors(err) {
 			log.Println(err)
-		} else {
-			parsedEvents = append(parsedEvents, events...)
 		}
+
+		parsedEvents = append(parsedEvents, events...)
 	}
 
 	err := s.eventStore.UpsertMultiple(parsedEvents)
