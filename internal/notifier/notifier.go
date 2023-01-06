@@ -2,12 +2,12 @@ package notifier
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	vb "github.com/mattfan00/mangovb"
 	"github.com/mattfan00/mangovb/internal/bot"
 	"github.com/mattfan00/mangovb/internal/store"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -17,20 +17,28 @@ type Notifier struct {
 	bot             *bot.Bot
 	eventStore      *store.EventStore
 	eventNotifStore *store.EventNotifStore
+	logger          *logrus.Entry
 }
 
-func New(bot *bot.Bot, eventStore *store.EventStore, eventNotifStore *store.EventNotifStore) *Notifier {
+func New(
+	bot *bot.Bot,
+	eventStore *store.EventStore,
+	eventNotifStore *store.EventNotifStore,
+	logger *logrus.Entry,
+) *Notifier {
 	return &Notifier{
 		bot:             bot,
 		eventStore:      eventStore,
 		eventNotifStore: eventNotifStore,
+		logger:          logger,
 	}
 }
 
 func (n *Notifier) Notify() {
 	events, err := n.eventStore.GetLatest()
 	if err != nil {
-		log.Println(err)
+		n.logger.Error(err)
+		return
 	}
 
 	ids := make([]string, len(events))
@@ -40,7 +48,8 @@ func (n *Notifier) Notify() {
 
 	notifMap, err := n.eventNotifStore.GetByEventIds(ids)
 	if err != nil {
-		log.Fatal(err)
+		n.logger.Error(err)
+		return
 	}
 
 	notifs := createNotifs(events, notifMap)
@@ -48,13 +57,14 @@ func (n *Notifier) Notify() {
 	if len(notifs) > 0 {
 		err = n.eventNotifStore.InsertMultiple(notifs)
 		if err != nil {
-			log.Fatal(err)
+			n.logger.Error(err)
+			return
 		}
 
 		message := generateNotifMessage(notifs)
 		err = n.bot.SendMessageToAllChannels(message)
 		for _, err := range multierr.Errors(err) {
-			log.Println(err)
+			n.logger.Warn(err)
 		}
 	}
 }

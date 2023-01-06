@@ -1,26 +1,28 @@
 package scraper
 
 import (
-	"log"
-
 	vb "github.com/mattfan00/mangovb"
 	"github.com/mattfan00/mangovb/internal/engine"
 	"github.com/mattfan00/mangovb/internal/store"
 	"github.com/mattfan00/mangovb/pkg/query"
+	"github.com/sirupsen/logrus"
+
 	"go.uber.org/multierr"
 )
 
 type Scraper struct {
 	eventStore *store.EventStore
 	engines    []engine.Engine
+	logger     *logrus.Entry
 }
 
-func New(eventStore *store.EventStore) *Scraper {
+func New(eventStore *store.EventStore, logger *logrus.Entry) *Scraper {
 	client := query.DefaultClient()
 
 	scraper := &Scraper{
 		eventStore: eventStore,
 		engines:    []engine.Engine{},
+		logger:     logger,
 	}
 	scraper.RegisterEngine(engine.NewNyUrbanEngine(client))
 
@@ -37,7 +39,7 @@ func (s *Scraper) Scrape() {
 	for _, engine := range s.engines {
 		events, err := engine.Run()
 		for _, err := range multierr.Errors(err) {
-			log.Println(err)
+			s.logger.Warn(err)
 		}
 
 		parsedEvents = append(parsedEvents, events...)
@@ -45,6 +47,7 @@ func (s *Scraper) Scrape() {
 
 	err := s.eventStore.UpsertMultiple(parsedEvents)
 	if err != nil {
-		log.Fatal(err)
+		s.logger.Error(err)
+		return
 	}
 }

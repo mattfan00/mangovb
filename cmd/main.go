@@ -1,16 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mattfan00/nycvbtracker/internal/bot"
-	"github.com/mattfan00/nycvbtracker/internal/notifier"
-	"github.com/mattfan00/nycvbtracker/internal/scraper"
-	"github.com/mattfan00/nycvbtracker/internal/store"
+	"github.com/mattfan00/mangovb/internal/bot"
+	"github.com/mattfan00/mangovb/internal/logger"
+	"github.com/mattfan00/mangovb/internal/notifier"
+	"github.com/mattfan00/mangovb/internal/scraper"
+	"github.com/mattfan00/mangovb/internal/store"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -25,10 +24,14 @@ func main() {
 	err := viper.ReadInConfig()
 	checkErr(err)
 
+	log := logger.New()
+	scraperLogger := logger.SetSource(log, "scraper")
+	notifierLogger := logger.SetSource(log, "notifier")
+
 	dbConn := viper.GetString("db_conn")
 	db, err := sqlx.Connect("sqlite3", dbConn)
 	checkErr(err)
-	log.Printf("Connected to %s", dbConn)
+	log.Info("Connected to %s", dbConn)
 
 	eventStore := store.NewEventStore(db)
 	eventNotifStore := store.NewEventNotifStore(db)
@@ -39,12 +42,11 @@ func main() {
 	err = bot.Start()
 	checkErr(err)
 	defer func() {
-		fmt.Println("end")
 		bot.Stop()
 	}()
 
-	scraper := scraper.New(eventStore)
-	notifier := notifier.New(bot, eventStore, eventNotifStore)
+	scraper := scraper.New(eventStore, scraperLogger)
+	notifier := notifier.New(bot, eventStore, eventNotifStore, notifierLogger)
 
 	c := cron.New()
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
