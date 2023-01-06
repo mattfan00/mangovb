@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/mattfan00/mangovb/internal/bot"
 	"github.com/mattfan00/mangovb/internal/logger"
@@ -14,8 +15,12 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
+
+const SCRAPER_NAME = "scraper"
+const NOTIFIER_NAME = "notifier"
 
 func main() {
 	viper.SetConfigName("config")
@@ -25,13 +30,13 @@ func main() {
 	checkErr(err)
 
 	log := logger.New()
-	scraperLogger := logger.SetSource(log, "scraper")
-	notifierLogger := logger.SetSource(log, "notifier")
+	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
+	notifierLogger := logger.SetSource(log, NOTIFIER_NAME)
 
 	dbConn := viper.GetString("db_conn")
 	db, err := sqlx.Connect("sqlite3", dbConn)
 	checkErr(err)
-	log.Info("Connected to %s", dbConn)
+	log.Infof("Connected to DB: %s", dbConn)
 
 	eventStore := store.NewEventStore(db)
 	eventNotifStore := store.NewEventNotifStore(db)
@@ -50,12 +55,14 @@ func main() {
 
 	c := cron.New()
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
-		log.Println("Started scraper")
+		scraperLogger.Infof("Started %s", SCRAPER_NAME)
+		defer logExecTime(SCRAPER_NAME, scraperLogger)()
 		scraper.Scrape()
 	})
 
 	c.AddFunc(viper.GetString("cron_notify"), func() {
-		log.Println("Started notifer")
+		notifierLogger.Infof("Started %s", NOTIFIER_NAME)
+		defer logExecTime(NOTIFIER_NAME, notifierLogger)()
 		notifier.Notify()
 	})
 
@@ -69,5 +76,12 @@ func main() {
 func checkErr(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func logExecTime(name string, logger *logrus.Entry) func() {
+	start := time.Now()
+	return func() {
+		logger.Infof("%s execution time: %v\n", name, time.Since(start))
 	}
 }
