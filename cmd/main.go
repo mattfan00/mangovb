@@ -23,29 +23,38 @@ const SCRAPER_NAME = "scraper"
 const NOTIFIER_NAME = "notifier"
 
 func main() {
-	viper.SetConfigName("config")
+	log := logger.New()
+
+	viper.SetConfigName("confignot")
 	viper.AddConfigPath(".")
 
 	err := viper.ReadInConfig()
-	checkErr(err)
+	if err != nil {
+		log.Panic(err)
+	}
 
-	log := logger.New()
 	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
 	notifierLogger := logger.SetSource(log, NOTIFIER_NAME)
 
 	dbConn := viper.GetString("db_conn")
 	db, err := sqlx.Connect("sqlite3", dbConn)
-	checkErr(err)
+	if err != nil {
+		log.Panic(err)
+	}
 	log.Infof("Connected to DB: %s", dbConn)
 
 	eventStore := store.NewEventStore(db)
 	eventNotifStore := store.NewEventNotifStore(db)
 
 	bot, err := bot.New()
-	checkErr(err)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	err = bot.Start()
-	checkErr(err)
+	if err != nil {
+		log.Panic(err)
+	}
 	defer func() {
 		bot.Stop()
 	}()
@@ -71,12 +80,6 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
 
 func logExecTime(name string, logger *logrus.Entry) func() {
