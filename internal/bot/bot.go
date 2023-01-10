@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 )
 
@@ -19,8 +18,8 @@ type Channel struct {
 	GuildId string
 }
 
-func New() (*Bot, error) {
-	s, err := discordgo.New("Bot " + viper.GetString("bot_token"))
+func New(botToken string) (*Bot, error) {
+	s, err := discordgo.New("Bot " + botToken)
 	if err != nil {
 		return nil, err
 	}

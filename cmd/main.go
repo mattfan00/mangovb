@@ -23,14 +23,16 @@ const SCRAPER_NAME = "scraper"
 const NOTIFIER_NAME = "notifier"
 
 func main() {
-	log := logger.New()
-
-	viper.SetConfigName("confignot")
+	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
-
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panic(err)
+		panic(err)
+	}
+
+	log, err := logger.New(viper.GetString("env"), viper.GetString("log_path"))
+	if err != nil {
+		panic(err)
 	}
 
 	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
@@ -46,7 +48,7 @@ func main() {
 	eventStore := store.NewEventStore(db)
 	eventNotifStore := store.NewEventNotifStore(db)
 
-	bot, err := bot.New()
+	bot, err := bot.New(viper.GetString("bot_token"))
 	if err != nil {
 		log.Panic(err)
 	}
