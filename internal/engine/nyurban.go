@@ -30,7 +30,7 @@ func NewNyUrbanEngine(client *http.Client) *NyUrbanEngine {
 	}
 }
 
-func (n *NyUrbanEngine) parse(doc *goquery.Document) ([]vb.Event, error) {
+func (n *NyUrbanEngine) parse(doc *goquery.Document, sourceUrl string) ([]vb.Event, error) {
 	events := []vb.Event{}
 
 	tableDiv := doc.FindMatcher(goquery.Single("div.time_schedule_table"))
@@ -44,6 +44,7 @@ func (n *NyUrbanEngine) parse(doc *goquery.Document) ([]vb.Event, error) {
 
 		e := vb.Event{}
 		e.SourceId = n.sourceId
+		e.Url = sourceUrl
 		e.Location = location
 
 		parseErr := n.parseRow(row, &e)
@@ -159,7 +160,7 @@ func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
 		if queryErr != nil {
 			err = multierr.Append(err, QueryErr{url, queryErr})
 		} else {
-			events, parseErrs := n.parse(doc)
+			events, parseErrs := n.parse(doc, url)
 
 			err = multierr.Append(err, parseErrs)
 			allEvents = append(allEvents, events...)
