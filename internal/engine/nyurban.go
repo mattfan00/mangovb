@@ -65,7 +65,9 @@ func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 		event.Id = id
 	}
 
-	event.Name = row.Find("td:nth-child(3)").Text()
+	rawLevel := row.Find("td:nth-child(3)").Text()
+	event.Name = rawLevel
+	event.SkillLevel = getSkillLevel(rawLevel)
 
 	price, err := strconv.ParseFloat(row.Find("td:nth-child(5)").Text(), 64)
 	if err != nil {
@@ -128,6 +130,20 @@ func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 	}
 
 	return nil
+}
+
+func getSkillLevel(rawLevel string) vb.EventSkillLevel {
+	if strings.Contains(rawLevel, "Beginner") {
+		return vb.Beginner
+	} else if strings.Contains(rawLevel, "Intermediate") && strings.Contains(rawLevel, "Advanced") {
+		return vb.AdvancedIntermediate
+	} else if strings.Contains(rawLevel, "Intermediate") {
+		return vb.Intermediate
+	} else if strings.Contains(rawLevel, "Advanced") {
+		return vb.Advanced
+	}
+
+	return vb.None
 }
 
 func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
