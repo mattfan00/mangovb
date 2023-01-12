@@ -69,15 +69,18 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 	s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
 }
 
-func (b *Bot) SendMessageToAllChannels(message string) error {
+func (b *Bot) SendMessagesToAllChannels(messages []string) error {
+	fmt.Println(len(b.Channels))
 	var err error
 	for _, channel := range b.Channels {
-		_, sendErr := b.Session.ChannelMessageSend(channel.Id, message)
-		if sendErr != nil {
-			err = multierr.Append(
-				err,
-				fmt.Errorf("cannot send message to channel %s: %w", channel.Id, sendErr),
-			)
+		for _, msg := range messages {
+			_, sendErr := b.Session.ChannelMessageSend(channel.Id, msg)
+			if sendErr != nil {
+				err = multierr.Append(
+					err,
+					fmt.Errorf("cannot send message to channel %s: %w", channel.Id, sendErr),
+				)
+			}
 		}
 	}
 

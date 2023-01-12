@@ -24,6 +24,10 @@ const (
 	NyUrban EventSource = iota
 )
 
+var EventSourceMap = map[EventSource]string{
+	NyUrban: "NY Urban",
+}
+
 type EventSkillLevel int
 
 const (

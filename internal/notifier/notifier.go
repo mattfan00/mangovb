@@ -61,8 +61,8 @@ func (n *Notifier) Notify() {
 			return
 		}
 
-		message := generateNotifMessage(notifs)
-		err = n.bot.SendMessageToAllChannels(message)
+		messages := generateNotifMessages(notifs)
+		err = n.bot.SendMessagesToAllChannels(messages)
 		for _, err := range multierr.Errors(err) {
 			n.logger.Warn(err)
 		}
@@ -105,18 +105,34 @@ func createNotifs(events []vb.Event, notifMap map[string][]vb.EventNotif) []vb.E
 	return notifs
 }
 
-func generateNotifMessage(notifs []vb.EventNotif) string {
-	m := ""
+func generateNotifMessages(notifs []vb.EventNotif) []string {
+	messages := []string{}
+
+	newEventCount := map[vb.EventSource]int{}
+	limitedSpotsMessages := []string{}
 	for _, notif := range notifs {
 		switch notif.TypeId {
 		case vb.LimitedSpots:
-			m += "Limited spots"
+			msg := fmt.Sprintf(
+				"**%s**: %d spots left | %s :calendar_spiral: %s :round_pushpin: %s",
+				vb.EventSourceMap[notif.Event.SourceId],
+				notif.Event.SpotsLeft,
+				notif.Event.Name,
+				notif.Event.StartDate,
+				notif.Event.Location,
+			)
+			limitedSpotsMessages = append(limitedSpotsMessages, msg)
 		case vb.NewEvent:
-			m += "New event"
+			newEventCount[notif.Event.SourceId] += 1
 		}
-		m += " - "
-		m += fmt.Sprintf("%s on %s\n", notif.Event.Name, notif.Event.StartDate)
 	}
 
-	return m
+	for sourceId, count := range newEventCount {
+		msg := fmt.Sprintf("**%s**: %d new events", vb.EventSourceMap[sourceId], count)
+		messages = append(messages, msg)
+	}
+
+	messages = append(messages, limitedSpotsMessages...)
+
+	return messages
 }
