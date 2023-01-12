@@ -90,12 +90,17 @@ func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 		eventYear = currentTime.Year() + 1
 	}
 
-	event.StartDate = time.Date(
+	newYorkTimezone, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		return err
+	}
+
+	startDate := time.Date(
 		eventYear,
 		parsedStartDate.Month(),
 		parsedStartDate.Day(),
 		0, 0, 0, 0,
-		parsedStartDate.Location(),
+		newYorkTimezone,
 	)
 
 	rawTimesSplit := strings.Split(row.Find("td:nth-child(4)").Text(), "-")
@@ -106,13 +111,13 @@ func (n *NyUrbanEngine) parseRow(row *goquery.Selection, event *vb.Event) error 
 	if err != nil {
 		return err
 	}
-	event.StartTime = parsedStartTime.Format("15:04")
+	event.StartTime = combineDateAndTime(startDate, parsedStartTime)
 
 	parsedEndTime, err := time.Parse("3:04 pm", rawEndTime)
 	if err != nil {
 		return err
 	}
-	event.EndTime = parsedEndTime.Format("15:04")
+	event.EndTime = combineDateAndTime(startDate, parsedEndTime)
 
 	rawAvail := strings.TrimSpace(row.Find("td:nth-child(6)").Text())
 	if rawAvail == "Yes" {
@@ -145,6 +150,19 @@ func getSkillLevel(rawLevel string) vb.EventSkillLevel {
 	}
 
 	return vb.None
+}
+
+func combineDateAndTime(d time.Time, t time.Time) time.Time {
+	return time.Date(
+		d.Year(),
+		d.Month(),
+		d.Day(),
+		t.Hour(),
+		t.Minute(),
+		t.Second(),
+		t.Nanosecond(),
+		d.Location(),
+	)
 }
 
 func (n *NyUrbanEngine) Run() ([]vb.Event, error) {

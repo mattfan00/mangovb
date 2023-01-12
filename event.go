@@ -6,9 +6,8 @@ type Event struct {
 	Id          string          `db:"id"`
 	Name        string          `db:"name"`
 	Location    string          `db:"location"`
-	StartDate   time.Time       `db:"start_date"`
-	StartTime   string          `db:"start_time"`
-	EndTime     string          `db:"end_time"`
+	StartTime   time.Time       `db:"start_time"`
+	EndTime     time.Time       `db:"end_time"`
 	SkillLevel  EventSkillLevel `db:"skill_level"`
 	Price       float64         `db:"price"`
 	IsAvailable bool            `db:"is_available"`

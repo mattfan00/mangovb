@@ -25,11 +25,10 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 
 	baseInsert := sq.
 		Insert("event").
-		Columns("id", "source_id", "name", "location", "start_date", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
+		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
 		Suffix(fmt.Sprintf("ON CONFLICT(id) DO UPDATE SET %s", setMap(map[string]interface{}{
 			"name":         "excluded.name",
 			"location":     "excluded.location",
-			"start_date":   "excluded.start_date",
 			"start_time":   "excluded.start_time",
 			"end_time":     "excluded.end_time",
 			"skill_level":  "excluded.skill_level",
@@ -51,7 +50,6 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 			event.SourceId,
 			event.Name,
 			event.Location,
-			event.StartDate,
 			event.StartTime,
 			event.EndTime,
 			event.SkillLevel,
@@ -83,7 +81,7 @@ func (es *EventStore) GetLatest() ([]vb.Event, error) {
 		From("event")
 
 	stmt, args, err := sq.Select().
-		Columns("id", "source_id", "name", "location", "start_date", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
+		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
 		FromSelect(subquery, "t").
 		Where(sq.And{
 			sq.Eq{"rn": 1},

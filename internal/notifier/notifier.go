@@ -118,7 +118,7 @@ func generateNotifMessages(notifs []vb.EventNotif) []string {
 				vb.EventSourceMap[notif.Event.SourceId],
 				notif.Event.SpotsLeft,
 				notif.Event.Name,
-				notif.Event.StartDate,
+				notif.Event.StartTime,
 				notif.Event.Location,
 			)
 			limitedSpotsMessages = append(limitedSpotsMessages, msg)

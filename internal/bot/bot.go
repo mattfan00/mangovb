@@ -70,7 +70,6 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 }
 
 func (b *Bot) SendMessagesToAllChannels(messages []string) error {
-	fmt.Println(len(b.Channels))
 	var err error
 	for _, channel := range b.Channels {
 		for _, msg := range messages {
