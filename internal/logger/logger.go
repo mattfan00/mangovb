@@ -6,20 +6,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func New(env string, logPath string) (*logrus.Logger, error) {
+func New() *logrus.Logger {
 	logger := logrus.New()
+	logger.SetOutput(os.Stdout)
 
-	if env == "prod" {
-		f, err := os.OpenFile(logPath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-		if err != nil {
-			return nil, err
-		}
-		logger.SetOutput(f)
-	} else {
-		logger.SetOutput(os.Stdout)
-	}
-
-	return logger, nil
+	return logger
 }
 
 func SetSource(logger *logrus.Logger, source string) *logrus.Entry {

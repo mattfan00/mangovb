@@ -23,16 +23,13 @@ const SCRAPER_NAME = "scraper"
 const NOTIFIER_NAME = "notifier"
 
 func main() {
+	log := logger.New()
+
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(err)
-	}
-
-	log, err := logger.New(viper.GetString("env"), viper.GetString("log_path"))
-	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
