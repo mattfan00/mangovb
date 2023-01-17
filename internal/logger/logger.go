@@ -6,9 +6,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func New() *logrus.Logger {
+func New(env string) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetOutput(os.Stdout)
+
+	if env == "prod" {
+		logger.SetFormatter(&logrus.JSONFormatter{})
+	} else {
+		logger.SetFormatter(&logrus.TextFormatter{})
+	}
 
 	return logger
 }

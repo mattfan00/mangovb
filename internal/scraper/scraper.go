@@ -38,6 +38,16 @@ func (s *Scraper) Scrape() {
 
 	for _, engine := range s.engines {
 		events, err := engine.Run()
+		for _, event := range events {
+			s.logger.WithFields(logrus.Fields{
+				"event": logrus.Fields{
+					"id":           event.Id,
+					"is_available": event.IsAvailable,
+					"spots_left":   event.SpotsLeft,
+				},
+			}).Info("Scraped event")
+		}
+
 		for _, err := range multierr.Errors(err) {
 			s.logger.Warn(err)
 		}

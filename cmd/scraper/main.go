@@ -23,14 +23,15 @@ const SCRAPER_NAME = "scraper"
 const NOTIFIER_NAME = "notifier"
 
 func main() {
-	log := logger.New()
 
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
+
+	log := logger.New(viper.GetString("env"))
 
 	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
 	notifierLogger := logger.SetSource(log, NOTIFIER_NAME)
@@ -61,6 +62,10 @@ func main() {
 	scraper := scraper.New(eventStore, scraperLogger)
 	notifier := notifier.New(bot, eventStore, eventNotifStore, notifierLogger)
 
+	time.Sleep(1000 * time.Millisecond)
+	scraper.Scrape()
+	//notifier.Notify()
+
 	c := cron.New()
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
 		scraperLogger.Infof("Started %s", SCRAPER_NAME)
@@ -74,7 +79,7 @@ func main() {
 		notifier.Notify()
 	})
 
-	c.Start()
+	//c.Start()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
@@ -84,6 +89,6 @@ func main() {
 func logExecTime(name string, logger *logrus.Entry) func() {
 	start := time.Now()
 	return func() {
-		logger.Infof("%s execution time: %v\n", name, time.Since(start))
+		logger.Infof("%s execution time: %v", name, time.Since(start))
 	}
 }
