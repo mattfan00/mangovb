@@ -55,6 +55,13 @@ func (n *Notifier) Notify() {
 	notifs := createNotifs(events, notifMap)
 
 	if len(notifs) > 0 {
+		for _, notif := range notifs {
+			n.logger.WithFields(logrus.Fields{
+				"notif_type": notif.TypeId,
+				"event_id":   notif.EventId,
+			}).Info("Created notif")
+		}
+
 		err = n.eventNotifStore.InsertMultiple(notifs)
 		if err != nil {
 			n.logger.Error(err)
@@ -66,6 +73,8 @@ func (n *Notifier) Notify() {
 		for _, err := range multierr.Errors(err) {
 			n.logger.Warn(err)
 		}
+	} else {
+		n.logger.Info("No notifs")
 	}
 }
 
@@ -128,7 +137,7 @@ func generateNotifMessages(notifs []vb.EventNotif) []string {
 	}
 
 	for sourceId, count := range newEventCount {
-		msg := fmt.Sprintf("**%s**: %d new events", vb.EventSourceMap[sourceId], count)
+		msg := fmt.Sprintf("**%s**: %d new event(s)", vb.EventSourceMap[sourceId], count)
 		messages = append(messages, msg)
 	}
 
