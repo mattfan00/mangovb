@@ -62,10 +62,6 @@ func main() {
 	scraper := scraper.New(eventStore, scraperLogger)
 	notifier := notifier.New(bot, eventStore, eventNotifStore, notifierLogger)
 
-	time.Sleep(1000 * time.Millisecond)
-	scraper.Scrape()
-	//notifier.Notify()
-
 	c := cron.New()
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
 		scraperLogger.Infof("Started %s", SCRAPER_NAME)
@@ -79,7 +75,7 @@ func main() {
 		notifier.Notify()
 	})
 
-	//c.Start()
+	c.Start()
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
