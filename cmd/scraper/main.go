@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,9 +24,10 @@ const SCRAPER_NAME = "scraper"
 const NOTIFIER_NAME = "notifier"
 
 func main() {
+	configPath := flag.String("c", "./config.yaml", "path to config file")
+	flag.Parse()
 
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.SetConfigFile(*configPath)
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(err)
