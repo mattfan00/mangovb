@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	vb "github.com/mattfan00/mangovb"
@@ -118,30 +119,41 @@ func generateNotifMessages(notifs []vb.EventNotif) []string {
 	messages := []string{}
 
 	newEventCount := map[vb.EventSource]int{}
-	limitedSpotsMessages := []string{}
+	limitedSpotsNotifs := []vb.EventNotif{}
 	for _, notif := range notifs {
 		switch notif.TypeId {
 		case vb.LimitedSpots:
-			msg := fmt.Sprintf(
-				"**%s**: %d spot(s) left | %s :calendar_spiral: %s :round_pushpin: %s",
-				vb.EventSourceMap[notif.Event.SourceId],
-				notif.Event.SpotsLeft,
-				notif.Event.Name,
-				notif.Event.StartTime.Format("Mon Jan 02 3:04 PM"),
-				notif.Event.Location,
-			)
-			limitedSpotsMessages = append(limitedSpotsMessages, msg)
+			limitedSpotsNotifs = append(limitedSpotsNotifs, notif)
 		case vb.NewEvent:
 			newEventCount[notif.Event.SourceId] += 1
 		}
 	}
 
 	for sourceId, count := range newEventCount {
-		msg := fmt.Sprintf("**%s**: %d new event(s)", vb.EventSourceMap[sourceId], count)
+		msg := fmt.Sprintf(
+			"**%s**: %d new event(s)",
+			vb.EventSourceMap[sourceId],
+			count,
+		)
 		messages = append(messages, msg)
 	}
 
-	messages = append(messages, limitedSpotsMessages...)
+	sort.Slice(limitedSpotsNotifs, func(i, j int) bool {
+		return limitedSpotsNotifs[i].Event.StartTime.
+			Before(limitedSpotsNotifs[j].Event.StartTime)
+	})
+
+	for _, notif := range limitedSpotsNotifs {
+		msg := fmt.Sprintf(
+			"**%s**: %d spot(s) left | %s :calendar_spiral: %s :round_pushpin: %s",
+			vb.EventSourceMap[notif.Event.SourceId],
+			notif.Event.SpotsLeft,
+			notif.Event.Name,
+			notif.Event.StartTime.Format("Mon Jan 02 3:04 PM"),
+			notif.Event.Location,
+		)
+		messages = append(messages, msg)
+	}
 
 	return messages
 }
