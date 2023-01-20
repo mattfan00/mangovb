@@ -123,11 +123,11 @@ func generateNotifMessages(notifs []vb.EventNotif) []string {
 		switch notif.TypeId {
 		case vb.LimitedSpots:
 			msg := fmt.Sprintf(
-				"**%s**: %d spots left | %s :calendar_spiral: %s :round_pushpin: %s",
+				"**%s**: %d spot(s) left | %s :calendar_spiral: %s :round_pushpin: %s",
 				vb.EventSourceMap[notif.Event.SourceId],
 				notif.Event.SpotsLeft,
 				notif.Event.Name,
-				notif.Event.StartTime.Format("Jan 02 3:04pm"),
+				notif.Event.StartTime.Format("Mon Jan 02 3:04 PM"),
 				notif.Event.Location,
 			)
 			limitedSpotsMessages = append(limitedSpotsMessages, msg)

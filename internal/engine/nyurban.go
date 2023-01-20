@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -39,6 +40,13 @@ func (n *NyUrbanEngine) parse(doc *goquery.Document, sourceUrl string) ([]vb.Eve
 	var err error
 	tableDiv.Find("table tr").Each(func(rowNum int, row *goquery.Selection) {
 		if rowNum == 0 {
+			return
+		}
+
+		// skip row if it doesn't have expected number of columns
+		// thus, it skips rows that indicate there are no spots available
+		if row.Find("td").Length() != 6 {
+			fmt.Println("skip this one bithces")
 			return
 		}
 
@@ -170,6 +178,9 @@ func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
 
 	urls := []string{
 		"https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-registration-vb/?id=18&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-registration-vb/?id=34&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-registration-vb/?id=32&gametypeid=11&filter_id=1",
 	}
 
 	allEvents := []vb.Event{}
