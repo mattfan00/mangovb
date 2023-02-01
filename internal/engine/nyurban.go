@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -46,7 +45,6 @@ func (n *NyUrbanEngine) parse(doc *goquery.Document, sourceUrl string) ([]vb.Eve
 		// skip row if it doesn't have expected number of columns
 		// thus, it skips rows that indicate there are no spots available
 		if row.Find("td").Length() != 6 {
-			fmt.Println("skip this one bithces")
 			return
 		}
 
