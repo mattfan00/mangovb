@@ -1,12 +1,25 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
 
-func routes() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
-	})
+	"github.com/go-chi/chi/v5"
+)
 
-	return mux
+func (a *Api) routes() *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Get("/events", a.getEvents)
+
+	return r
+}
+
+func (a *Api) getEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := a.eventStore.GetAll()
+	if err != nil {
+		renderError(w, ErrInternalServer(err))
+		return
+	}
+
+	render(w, http.StatusOK, events)
 }

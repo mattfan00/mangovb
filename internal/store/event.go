@@ -96,3 +96,21 @@ func (es *EventStore) GetLatest() ([]vb.Event, error) {
 
 	return events, err
 }
+
+func (es *EventStore) GetAll() ([]vb.Event, error) {
+	stmt, args, err := sq.Select().
+		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
+		From("event").
+		Where("CURRENT_TIMESTAMP <= DATETIME(start_time , 'utc')").
+		OrderBy("start_time").
+		ToSql()
+
+	if err != nil {
+		return []vb.Event{}, err
+	}
+
+	events := []vb.Event{}
+	err = es.db.Select(&events, stmt, args...)
+
+	return events, err
+}
