@@ -4,10 +4,16 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+    "github.com/rs/cors"
 )
 
 func (a *Api) routes() *chi.Mux {
 	r := chi.NewRouter()
+
+    c := cors.New(cors.Options{
+        AllowedOrigins: []string{"http://localhost:5173"},
+    })
+    r.Use(c.Handler)
 
 	r.Get("/events", a.getEvents)
 
