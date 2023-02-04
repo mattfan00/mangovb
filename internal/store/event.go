@@ -74,36 +74,17 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	return err
 }
 
-func (es *EventStore) GetLatest() ([]vb.Event, error) {
-	subquery := sq.Select().
-		Column("*").
-		Column("ROW_NUMBER() OVER (PARTITION BY id ORDER BY updated_on DESC) AS rn").
-		From("event")
-
-	stmt, args, err := sq.Select().
+func (es *EventStore) GetLatest(sort bool) ([]vb.Event, error) {
+    baseSelect := sq.Select().
 		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
-		FromSelect(subquery, "t").
-		Where(sq.And{
-			sq.Eq{"rn": 1},
-		}).
-		ToSql()
-	if err != nil {
-		return []vb.Event{}, err
-	}
+        From("event").
+        Where("updated_on = (SELECT MAX(updated_on) FROM event)")
 
-	events := []vb.Event{}
-	err = es.db.Select(&events, stmt, args...)
+    if sort {
+        baseSelect = baseSelect.OrderBy("start_time, name")
+    }
 
-	return events, err
-}
-
-func (es *EventStore) GetAll() ([]vb.Event, error) {
-	stmt, args, err := sq.Select().
-		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
-		From("event").
-		Where("CURRENT_TIMESTAMP <= DATETIME(start_time , 'utc')").
-		OrderBy("start_time").
-		ToSql()
+    stmt, args, err := baseSelect.ToSql()
 
 	if err != nil {
 		return []vb.Event{}, err

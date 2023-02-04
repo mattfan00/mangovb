@@ -21,7 +21,7 @@ func (a *Api) routes() *chi.Mux {
 }
 
 func (a *Api) getEvents(w http.ResponseWriter, r *http.Request) {
-	events, err := a.eventStore.GetAll()
+	events, err := a.eventStore.GetLatest(true)
 	if err != nil {
 		renderError(w, ErrInternalServer(err))
 		return
