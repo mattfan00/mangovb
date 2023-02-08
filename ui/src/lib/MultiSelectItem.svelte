@@ -31,7 +31,7 @@
 
 <li 
     bind:this={element}
-    class="whitespace-nowrap px-2 py-1 rounded" 
+    class="whitespace-nowrap px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
     role="option" 
     tabindex="0" 
     aria-selected="false"
