@@ -33,12 +33,12 @@
         return {
             ...obj,
             selected: value,
-        }
-    })
+        };
+    });
 </script>
 
 <Popover class="relative">
-    <div>
+    <div class={$$props.class ?? ""}>
         <PopoverButton 
             class="border-2 border-black rounded px-3 py-1 font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors"
         >
@@ -52,7 +52,7 @@
     >
         <PopoverPanel 
             as="ul" 
-            class="absolute z-10 mt-1 bg-white border border-gray-100 rounded drop-shadow px-1 py-1" 
+            class="absolute z-10 mt-1 bg-white border border-gray-200 rounded drop-shadow px-1 py-1" 
             role="listbox"
         >
             <slot></slot>

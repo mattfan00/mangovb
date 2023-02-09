@@ -15,6 +15,7 @@
     })
 
     const handleChange = (e: CustomEvent<number[]>) => {
+        console.log(e.detail);
         selected = e.detail;
     }
 </script>
@@ -26,11 +27,11 @@
             buttonText="Source"
             value={selected}
             on:change={handleChange}
+            class="mr-2"
         >
-            <MultiSelectItem value={1}>hello</MultiSelectItem>
-            <MultiSelectItem value={2}>test</MultiSelectItem>
-            <MultiSelectItem value={3}>another test</MultiSelectItem>
-            <MultiSelectItem value={4}>this is a long one</MultiSelectItem>
+            <MultiSelectItem value={1} text="hello" />
+            <MultiSelectItem value={2} text="test" />
+            <MultiSelectItem value={3} text="another test" />
         </MultiSelect>
     </div>
     <div class="main-grid">

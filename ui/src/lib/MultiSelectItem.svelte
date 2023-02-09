@@ -5,6 +5,7 @@
     import { MULTI_SELECT_CONTEXT } from "./MultiSelect.svelte";
     
     export let value: any;
+    export let text: string;
 
     let element: HTMLElement;
     let store = getContext<Writable<MultiSelectStore>>(MULTI_SELECT_CONTEXT);
@@ -27,18 +28,25 @@
 		}
     }
 
+    $: selected = $store.selected.includes(value);
 </script>
 
 <li 
     bind:this={element}
-    class="whitespace-nowrap px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+    class="flex items-center whitespace-nowrap px-2 py-1 rounded hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer select-none"
     role="option" 
     tabindex="0" 
-    aria-selected="false"
+    aria-selected={selected}
     on:click={onClick}
     on:keydown={onKeyDown}
     on:keyup
     on:keypress
 >
-    <slot></slot>
+    <input 
+        type="checkbox" 
+        class="rounded-sm pointer-events-none mr-2" 
+        tabindex="-1" 
+        checked={selected}
+    />
+    {text}
 </li>
