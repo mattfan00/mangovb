@@ -5,33 +5,76 @@
     import MultiSelect from "../lib/MultiSelect.svelte";
     import MultiSelectItem from "../lib/MultiSelectItem.svelte";
 
-    let selected: number[] = [];
+    interface Selected {
+        [key: string]: any[];
+    }
+    let selected: Selected = {
+        source: [],
+        skillLevel: [],
+        spots: [],
+    };
     let events: Event[] = [];
+    let url = "http://localhost:8080/events";
+
+    const getEvents = async () => {
+        const res = await fetch(url);
+        events = await res.json() as Event[];
+    }
 
     onMount(async () => {
-        console.log("this is a test")
-        const res = await fetch("http://localhost:8080/events");
-        events = await res.json() as Event[];
+        await getEvents();
     })
 
-    const handleChange = (e: CustomEvent<number[]>) => {
-        console.log(e.detail);
-        selected = e.detail;
+    const handleFilter = async (e: CustomEvent<number[]>, key: string) => {
+        let local = {...selected};
+        local[key] = e.detail;
+
+        selected = local;
+
+        const u = new URL(url);
+        Object.keys(selected).forEach((key) => {
+            u.searchParams.delete(key);
+            const val = selected[key];
+            if (val.length > 0) {
+                u.searchParams.set(key, val.join("|"));
+            }
+        });
+        
+        url = u.href;
+
+        await getEvents();
     }
 </script>
-
 
 <div>
     <div class="mb-6 flex">
         <MultiSelect 
-            buttonText="Source"
-            value={selected}
-            on:change={handleChange}
+            buttonText="source"
+            value={selected.source}
+            on:change={(e) => handleFilter(e, "source")}
             class="mr-2"
         >
-            <MultiSelectItem value={1} text="hello" />
-            <MultiSelectItem value={2} text="test" />
-            <MultiSelectItem value={3} text="another test" />
+            <MultiSelectItem value={1} text="NY Urban" />
+        </MultiSelect>
+        <MultiSelect 
+            buttonText="skill level"
+            value={selected.skillLevel}
+            on:change={(e) => handleFilter(e, "skillLevel")}
+            class="mr-2"
+        >
+            <MultiSelectItem value={1} text="Beginner" />
+            <MultiSelectItem value={2} text="Intermediate" />
+            <MultiSelectItem value={3} text="Advanced" />
+        </MultiSelect>
+        <MultiSelect 
+            buttonText="spots"
+            value={selected.spots}
+            on:change={(e) => handleFilter(e, "spots")}
+            class="mr-2"
+        >
+            <MultiSelectItem value={1} text="Filled" />
+            <MultiSelectItem value={2} text="< 5" />
+            <MultiSelectItem value={3} text="Available" />
         </MultiSelect>
     </div>
     <div class="main-grid">
