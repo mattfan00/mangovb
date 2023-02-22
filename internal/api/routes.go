@@ -47,7 +47,7 @@ type FilterEntry struct {
 type ByValue []FilterEntry
 
 func (a ByValue) Len() int           { return len(a) }
-func (a ByValue) Swap(i, j int)      { a[i].Value, a[j].Value = a[j].Value, a[i].Value }
+func (a ByValue) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByValue) Less(i, j int) bool { return a[i].Value < a[j].Value }
 
 func (a *Api) getFilters(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func (a *Api) getFilters(w http.ResponseWriter, r *http.Request) {
 		}
 		skillLevelFilters = append(skillLevelFilters, filter)
 	}
-	sort.Sort(ByValue(sourceFilters))
+	sort.Sort(ByValue(skillLevelFilters))
 	res.SkillLevel = skillLevelFilters
 
 	res.Spots = []FilterEntry{
