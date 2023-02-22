@@ -37,6 +37,14 @@ const (
 	Advanced
 )
 
+var EventSkillLevelMap = map[EventSkillLevel]string{
+    None: "None",
+    Beginner: "Beginner",
+    Intermediate: "Intermediate",
+    AdvancedIntermediate: "Advanced/Intermediate",
+    Advanced: "Advanced",
+}
+
 type EventNotifType int
 
 const (
