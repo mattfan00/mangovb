@@ -38,9 +38,9 @@
 </script>
 
 <Popover class="relative">
-    <div class={$$props.class ?? ""}>
+    <div class={$$props.class}>
         <PopoverButton 
-            class="border-2 border-black rounded px-3 py-1 font-semibold hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            class="rounded px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors"
         >
             {buttonText}
         </PopoverButton>

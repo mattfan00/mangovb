@@ -1,11 +1,15 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	vb "github.com/mattfan00/mangovb"
+	"github.com/mattfan00/mangovb/internal/store"
+	"github.com/mattfan00/mangovb/pkg/util"
 	"github.com/rs/cors"
 )
 
@@ -23,8 +27,23 @@ func (a *Api) routes() *chi.Mux {
 	return r
 }
 
+func parseQuery(query string) []int {
+	if query == "" {
+		return []int{}
+	}
+
+	arr, _ := util.SliceAtoi(strings.Split(query, "|"))
+	return arr
+}
+
 func (a *Api) getEvents(w http.ResponseWriter, r *http.Request) {
-	events, err := a.eventStore.GetLatest(true)
+	filters := store.EventQueryFilters{
+		Source:     parseQuery(r.URL.Query().Get("source")),
+		SkillLevel: parseQuery(r.URL.Query().Get("skillLevel")),
+		Spots:      parseQuery(r.URL.Query().Get("spots")),
+	}
+
+	events, err := a.eventStore.GetLatest(true, filters)
 	if err != nil {
 		renderError(w, ErrInternalServer(err))
 		return
@@ -33,7 +52,7 @@ func (a *Api) getEvents(w http.ResponseWriter, r *http.Request) {
 	render(w, http.StatusOK, events)
 }
 
-type FilterResponse struct {
+type GetFiltersResponse struct {
 	Source     []FilterEntry `json:"source"`
 	SkillLevel []FilterEntry `json:"skillLevel"`
 	Spots      []FilterEntry `json:"spots"`
@@ -51,29 +70,29 @@ func (a ByValue) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByValue) Less(i, j int) bool { return a[i].Value < a[j].Value }
 
 func (a *Api) getFilters(w http.ResponseWriter, r *http.Request) {
-	res := FilterResponse{}
+	res := GetFiltersResponse{}
 
-	sourceFilters := []FilterEntry{}
+	source := []FilterEntry{}
 	for k, v := range vb.EventSourceMap {
 		filter := FilterEntry{
 			Value: int(k),
 			Text:  v,
 		}
-		sourceFilters = append(sourceFilters, filter)
+		source = append(source, filter)
 	}
-	sort.Sort(ByValue(sourceFilters))
-	res.Source = sourceFilters
+	sort.Sort(ByValue(source))
+	res.Source = source
 
-	skillLevelFilters := []FilterEntry{}
+	skillLevel := []FilterEntry{}
 	for k, v := range vb.EventSkillLevelMap {
 		filter := FilterEntry{
 			Value: int(k),
 			Text:  v,
 		}
-		skillLevelFilters = append(skillLevelFilters, filter)
+		skillLevel = append(skillLevel, filter)
 	}
-	sort.Sort(ByValue(skillLevelFilters))
-	res.SkillLevel = skillLevelFilters
+	sort.Sort(ByValue(skillLevel))
+	res.SkillLevel = skillLevel
 
 	res.Spots = []FilterEntry{
 		{Value: 0, Text: "Filled"},

@@ -74,17 +74,32 @@ func (es *EventStore) UpsertMultiple(events []vb.Event) error {
 	return err
 }
 
-func (es *EventStore) GetLatest(sort bool) ([]vb.Event, error) {
-    baseSelect := sq.Select().
+type EventQueryFilters struct {
+	Source     []int
+	SkillLevel []int
+	Spots      []int
+}
+
+func (es *EventStore) GetLatest(sort bool, filters EventQueryFilters) ([]vb.Event, error) {
+	baseSelect := sq.Select().
 		Columns("id", "source_id", "name", "location", "start_time", "end_time", "skill_level", "price", "is_available", "spots_left", "url", "updated_on").
-        From("event").
-        Where("updated_on = (SELECT MAX(updated_on) FROM event)")
+		From("event").
+		Where("updated_on = (SELECT MAX(updated_on) FROM event)")
 
-    if sort {
-        baseSelect = baseSelect.OrderBy("start_time, name")
-    }
+	if len(filters.Source) > 0 {
+		baseSelect = baseSelect.Where(sq.Eq{"source_id": filters.Source})
+	}
+	if len(filters.SkillLevel) > 0 {
+		baseSelect = baseSelect.Where(sq.Eq{"skill_level": filters.SkillLevel})
+	}
+	if len(filters.Spots) > 0 {
+		baseSelect = baseSelect.Where(sq.Eq{"is_available": filters.Spots})
+	}
+	if sort {
+		baseSelect = baseSelect.OrderBy("start_time, name")
+	}
 
-    stmt, args, err := baseSelect.ToSql()
+	stmt, args, err := baseSelect.ToSql()
 
 	if err != nil {
 		return []vb.Event{}, err

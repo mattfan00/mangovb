@@ -36,7 +36,7 @@ func New(
 }
 
 func (n *Notifier) Notify() {
-	events, err := n.eventStore.GetLatest(false)
+	events, err := n.eventStore.GetLatest(false, store.EventQueryFilters{})
 	if err != nil {
 		n.logger.Error(err)
 		return
