@@ -2,15 +2,16 @@ package bot
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 )
 
 type Bot struct {
 	Session  *discordgo.Session
-	Channels []*Channel
+	Channels map[string]*Channel
+	logger   *logrus.Entry
 }
 
 type Channel struct {
@@ -18,7 +19,7 @@ type Channel struct {
 	GuildId string
 }
 
-func New(botToken string) (*Bot, error) {
+func New(botToken string, logger *logrus.Entry) (*Bot, error) {
 	s, err := discordgo.New("Bot " + botToken)
 	if err != nil {
 		return nil, err
@@ -28,7 +29,8 @@ func New(botToken string) (*Bot, error) {
 
 	bot := &Bot{
 		Session:  s,
-		Channels: []*Channel{},
+		Channels: map[string]*Channel{},
+		logger:   logger,
 	}
 
 	bot.Session.AddHandler(bot.ready)
@@ -46,27 +48,46 @@ func (b *Bot) guildCreate(s *discordgo.Session, guild *discordgo.GuildCreate) {
 		return
 	}
 
+	b.logger.WithFields(logrus.Fields{
+		"guild_id": guild.ID,
+	}).Info("Connected to guild")
+
+	foundChannel := false
 	for _, channel := range guild.Channels {
 		if channel.Name == "volleyball-events" {
-			b.Channels = append(b.Channels, &Channel{
+			b.Channels[channel.ID] = &Channel{
 				Id:      channel.ID,
 				GuildId: guild.ID,
-			})
-			return
+			}
+			foundChannel = true
+
+			b.logger.WithFields(logrus.Fields{
+				"guild_id":   guild.ID,
+				"channel_id": channel.ID,
+			}).Info("Found channel")
+
+			break
 		}
 	}
 
 	// create volleyball-events channel if it doesn't exist
-	newChannel, err := s.GuildChannelCreate(guild.ID, "volleyball-events", 0)
-	if err != nil {
-		log.Println(err)
-	}
-	b.Channels = append(b.Channels, &Channel{
-		Id:      newChannel.ID,
-		GuildId: guild.ID,
-	})
+	if !foundChannel {
+		newChannel, err := s.GuildChannelCreate(guild.ID, "volleyball-events", 0)
+		if err != nil {
+			b.logger.Error(err)
+		}
+		b.Channels[newChannel.ID] = &Channel{
+			Id:      newChannel.ID,
+			GuildId: guild.ID,
+		}
 
-	s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
+		b.logger.WithFields(logrus.Fields{
+			"guild_id":   guild.ID,
+			"channel_id": newChannel.ID,
+		}).Info("Created new channel")
+
+		s.ChannelMessageSend(newChannel.ID, "This channel is for volleyball events")
+	}
 }
 
 func (b *Bot) SendMessagesToAllChannels(messages []string) error {
