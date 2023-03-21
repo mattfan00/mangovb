@@ -32,7 +32,18 @@
 
     onMount(async () => {
         await getFilters();
+
+        // use search params from window URL to API URL
+        const baseSearch = new URL(window.location.href).search;
+        const u = new URL(eventsUrl);
+        u.search = baseSearch;
+        eventsUrl = u.href;
+
         await getEvents();
+    })
+
+    addEventListener("popstate", async (e) => {
+        console.log(e)
     })
 
     const handleFilter = async (e: CustomEvent<number[]>, key: string) => {
@@ -51,6 +62,7 @@
         });
         
         eventsUrl = u.href;
+        window.history.pushState({}, "", u.search);
 
         await getEvents();
     }
