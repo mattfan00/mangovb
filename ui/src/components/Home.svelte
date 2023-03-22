@@ -43,7 +43,12 @@
     })
 
     addEventListener("popstate", async (e) => {
-        console.log(e)
+        const popWindow = e.target as Window
+        const u = new URL(eventsUrl);
+        u.search = new URL(popWindow.location.href).search;
+        eventsUrl = u.href;
+
+        await getEvents();
     })
 
     const handleFilter = async (e: CustomEvent<number[]>, key: string) => {
