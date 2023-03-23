@@ -2,6 +2,8 @@
     import { onMount } from "svelte";
     import dayjs from "dayjs";
     import type { Event, Filter } from "../types";
+    import request from "../request";
+    import { API_EVENTS_URL, API_FILTERS_URL } from "../constants";
     import MultiSelect from "../lib/MultiSelect.svelte";
     import MultiSelectItem from "../lib/MultiSelectItem.svelte";
 
@@ -15,61 +17,43 @@
     };
 
     let events: Event[] = [];
-    let eventsUrl = "http://localhost:8080/events";
-
     let filter: Filter;
-    let filterUrl = "http://localhost:8080/filters";
 
-    const getFilters = async () => {
-        const res = await fetch(filterUrl);
-        filter = await res.json() as Filter;
-    }
-
-    const getEvents = async () => {
-        const res = await fetch(eventsUrl);
-        events = await res.json() as Event[];
+    const getEvents = async (searchParams?: string | URLSearchParams) => {
+        let reqUrl = API_EVENTS_URL;
+        if (searchParams) {
+            reqUrl = request.withSearchParams(API_EVENTS_URL, searchParams);
+        }
+        events = await request.get(reqUrl);
     }
 
     onMount(async () => {
-        await getFilters();
+        filter = await request.get(API_FILTERS_URL);
 
         // use search params from window URL to API URL
-        const baseSearch = new URL(window.location.href).search;
-        const u = new URL(eventsUrl);
-        u.search = baseSearch;
-        eventsUrl = u.href;
-
-        await getEvents();
+        await getEvents(window.location.search);
     })
 
     addEventListener("popstate", async (e) => {
         const popWindow = e.target as Window
-        const u = new URL(eventsUrl);
-        u.search = new URL(popWindow.location.href).search;
-        eventsUrl = u.href;
-
-        await getEvents();
+        await getEvents(popWindow.location.search);
     })
 
     const handleFilter = async (e: CustomEvent<number[]>, key: string) => {
         let local = {...selected};
         local[key] = e.detail;
 
-        selected = local;
-
-        const u = new URL(eventsUrl);
+        const searchParams = new URLSearchParams();
         Object.keys(selected).forEach((key) => {
-            u.searchParams.delete(key);
-            const val = selected[key];
+            const val = local[key];
             if (val.length > 0) {
-                u.searchParams.set(key, val.join("|"));
+                searchParams.set(key, val.join("|"));
             }
         });
-        
-        eventsUrl = u.href;
-        window.history.pushState({}, "", u.search);
 
-        await getEvents();
+        await getEvents(searchParams);
+        selected = local;
+        window.history.pushState({}, "", request.withSearchParams(window.location.href, searchParams));
     }
 </script>
 
