@@ -13,13 +13,13 @@ export interface Event {
     updatedOn: string;
 }
 
-export interface Filter {
-    source: FilterEntry[];
-    skillLevel: FilterEntry[];
-    spots: FilterEntry[];
+export interface Filters {
+    source: Filter[];
+    skillLevel: Filter[];
+    spots: Filter[];
 }
 
-export interface FilterEntry {
+export interface Filter {
     value: number;
     text: string;
 }

@@ -1,6 +1,25 @@
-const base = async <T>(url: RequestInfo | URL, options: RequestInit)=> {
+export interface Res<T> {
+    data?: T;
+    error?: Error;
+}
+
+interface ErrResponse {
+    message: string;
+}
+
+const base = async <T>(url: RequestInfo | URL, options: RequestInit): Promise<Res<T>> => {
     const res = await fetch(url, options);
-    return await res.json() as T;
+    if (!res.ok) {
+        const data = await res.json() as ErrResponse;
+
+        return {
+            error: new Error(data.message),
+        };
+    }
+
+    return {
+        data: await res.json() as T,
+    };
 };
 
 export const get = async <T>(url: string) => {
