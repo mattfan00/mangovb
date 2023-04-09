@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply text-sm 
+    }
+}
+
+@layer components {
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        @apply gap-x-5 gap-y-1;
+    }
+
+    .main-grid-header {
+        @apply mb-3 text-gray-400 font-semibold;
+    }
+}
