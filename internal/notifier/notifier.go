@@ -63,16 +63,16 @@ func (n *Notifier) Notify() {
 			}).Info("Created notif")
 		}
 
-		err = n.eventNotifStore.InsertMultiple(notifs)
-		if err != nil {
-			n.logger.Error(err)
-			return
-		}
+        err = n.eventNotifStore.InsertMultiple(notifs)
+        if err != nil {
+            n.logger.Error(err)
+            return
+        }
 
 		messages := generateNotifMessages(notifs)
 		err = n.bot.SendMessagesToAllChannels(messages)
 		for _, err := range multierr.Errors(err) {
-			n.logger.Warn(err)
+			n.logger.Error(err)
 		}
 	} else {
 		n.logger.Info("No notifs")

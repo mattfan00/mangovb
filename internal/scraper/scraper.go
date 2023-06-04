@@ -49,7 +49,7 @@ func (s *Scraper) Scrape() {
 		}
 
 		for _, err := range multierr.Errors(err) {
-			s.logger.Warn(err)
+			s.logger.Error(err)
 		}
 
 		parsedEvents = append(parsedEvents, events...)
