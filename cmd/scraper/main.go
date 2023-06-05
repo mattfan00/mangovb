@@ -53,6 +53,10 @@ func main() {
 		log.Panic(err)
 	}
 
+	for _, channel := range viper.GetStringSlice("channels") {
+		bot.AddChannel(channel)
+	}
+
 	err = bot.Start()
 	if err != nil {
 		log.Panic(err)
