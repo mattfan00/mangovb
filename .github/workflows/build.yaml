@@ -1,4 +1,4 @@
-name: build-container
+name: build
 
 on:
   push:
@@ -24,4 +24,4 @@ jobs:
           context: .
           file: ./docker/scraper/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb-scraper:latest
