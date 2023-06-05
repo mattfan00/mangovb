@@ -175,10 +175,10 @@ func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
 	var err error
 
 	urls := []string{
-		"https://www.nyurban.com/open-play-registration-vb/?id=35&gametypeid=1&filter_id=1",
-		"https://www.nyurban.com/open-play-registration-vb/?id=18&gametypeid=1&filter_id=1",
-		"https://www.nyurban.com/open-play-registration-vb/?id=34&gametypeid=1&filter_id=1",
-		"https://www.nyurban.com/open-play-registration-vb/?id=32&gametypeid=11&filter_id=1",
+		"https://www.nyurban.com/open-play-volleyball-no/?id=35&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-volleyball-no/?id=18&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-volleyball-no/?id=34&gametypeid=1&filter_id=1",
+		"https://www.nyurban.com/open-play-volleyball-no/?id=32&gametypeid=11&filter_id=1",
 	}
 
 	allEvents := []vb.Event{}

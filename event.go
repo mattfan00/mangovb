@@ -57,5 +57,4 @@ type EventNotif struct {
 	EventId   string         `db:"event_id"`
 	Event     Event
 	CreatedOn time.Time `db:"created_on"`
-
 }

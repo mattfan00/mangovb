@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-const SCRAPER_SOURCE = "scraper"
-const NOTIFIER_SOURCE = "notifier"
+const SCRAPER_NAME = "scraper"
+const NOTIFIER_NAME = "notifier"
 
 func main() {
 	configPath := flag.String("c", "./config.yaml", "path to config file")
@@ -35,8 +35,8 @@ func main() {
 
 	log := logger.New(viper.GetString("env"))
 
-	scraperLogger := logger.SetSource(log, SCRAPER_SOURCE)
-	notifierLogger := logger.SetSource(log, NOTIFIER_SOURCE)
+	scraperLogger := logger.SetSource(log, SCRAPER_NAME)
+	notifierLogger := logger.SetSource(log, NOTIFIER_NAME)
 
 	dbConn := viper.GetString("db_conn")
 	db, err := sqlx.Connect("sqlite3", dbConn)
@@ -48,9 +48,13 @@ func main() {
 	eventStore := store.NewEventStore(db)
 	eventNotifStore := store.NewEventNotifStore(db)
 
-	bot, err := bot.New(viper.GetString("bot_token"), notifierLogger)
+	bot, err := bot.New(viper.GetString("bot_token"))
 	if err != nil {
 		log.Panic(err)
+	}
+
+	for _, channel := range viper.GetStringSlice("channels") {
+		bot.AddChannel(channel)
 	}
 
 	err = bot.Start()
@@ -66,14 +70,14 @@ func main() {
 
 	c := cron.New()
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
-		scraperLogger.Infof("Started %s", SCRAPER_SOURCE)
-		defer logExecTime(SCRAPER_SOURCE, scraperLogger)()
+		scraperLogger.Infof("Started %s", SCRAPER_NAME)
+		defer logExecTime(SCRAPER_NAME, scraperLogger)()
 		scraper.Scrape()
 	})
 
 	c.AddFunc(viper.GetString("cron_notify"), func() {
-		notifierLogger.Infof("Started %s", NOTIFIER_SOURCE)
-		defer logExecTime(NOTIFIER_SOURCE, notifierLogger)()
+		notifierLogger.Infof("Started %s", NOTIFIER_NAME)
+		defer logExecTime(NOTIFIER_NAME, notifierLogger)()
 		notifier.Notify()
 	})
 
