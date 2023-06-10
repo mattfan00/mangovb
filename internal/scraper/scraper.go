@@ -25,6 +25,7 @@ func New(eventStore *store.EventStore, logger *logrus.Entry) *Scraper {
 		logger:     logger,
 	}
 	scraper.RegisterEngine(engine.NewNyUrbanEngine(client))
+	scraper.RegisterEngine(engine.NewBigCityEngine(client))
 
 	return scraper
 }

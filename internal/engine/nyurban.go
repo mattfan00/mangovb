@@ -183,7 +183,7 @@ func (n *NyUrbanEngine) Run() ([]vb.Event, error) {
 
 	allEvents := []vb.Event{}
 	for _, url := range urls {
-		doc, queryErr := n.query.Visit(url)
+		doc, queryErr := n.query.Document(url)
 		if queryErr != nil {
 			err = multierr.Append(err, QueryErr{url, queryErr})
 		} else {
