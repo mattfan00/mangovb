@@ -130,7 +130,7 @@
         <div class="main-grid-header">Start time</div>
         <div class="main-grid-header">Spots</div>
         {#each events as event}
-            <div>{event.name}</div>
+            <div><a class="text-blue-500" href={event.url} target="_blank" rel="noreferrer">{event.name}</a></div>
             <div>{event.location}</div>
             <div>{dayjs(event.startTime).format("MMM DD h:mm A")}</div>
             {#if !event.isAvailable}
