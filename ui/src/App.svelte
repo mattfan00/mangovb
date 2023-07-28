@@ -3,7 +3,7 @@
 </script>
 
 <main class="flex justify-center">
-    <div class="max-w-2xl w-full mt-20 mb-40">
+    <div class="max-w-3xl w-full mt-20 mb-40">
         <Home />
     </div>
 </main>

@@ -25,6 +25,7 @@ func New(eventStore *store.EventStore, logger *logrus.Entry) *Scraper {
 		logger:     logger,
 	}
 	scraper.RegisterEngine(engine.NewNyUrbanEngine(client))
+	scraper.RegisterEngine(engine.NewBigCityEngine(client))
 
 	return scraper
 }
@@ -55,9 +56,9 @@ func (s *Scraper) Scrape() {
 		parsedEvents = append(parsedEvents, events...)
 	}
 
-	err := s.eventStore.UpsertMultiple(parsedEvents)
-	if err != nil {
-		s.logger.Error(err)
-		return
-	}
+		err := s.eventStore.UpsertMultiple(parsedEvents)
+		if err != nil {
+			s.logger.Error(err)
+			return
+		}
 }
