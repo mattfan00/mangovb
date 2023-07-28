@@ -68,8 +68,6 @@ func main() {
 	scraper := scraper.New(eventStore, scraperLogger)
 	notifier := notifier.New(bot, eventStore, eventNotifStore, notifierLogger)
 
-	scraper.Scrape()
-
 	c := cron.New(cron.WithChain(
 		cron.SkipIfStillRunning(cron.DefaultLogger),
 	))
