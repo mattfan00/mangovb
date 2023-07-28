@@ -56,9 +56,9 @@ func (s *Scraper) Scrape() {
 		parsedEvents = append(parsedEvents, events...)
 	}
 
-		err := s.eventStore.UpsertMultiple(parsedEvents)
-		if err != nil {
-			s.logger.Error(err)
-			return
-		}
+    err := s.eventStore.UpsertMultiple(parsedEvents)
+    if err != nil {
+        s.logger.Error(err)
+        return
+    }
 }

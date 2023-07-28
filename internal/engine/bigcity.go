@@ -63,6 +63,7 @@ func (b *BigCityEngine) Run() ([]vb.Event, error) {
 	var err error
 
 	// only fetches first 48 records
+    // TODO: use lastID param to fetch next page
 	url := "https://osapi.opensports.ca/app/posts/listFiltered?limit=48&limitedFields=true&groupID=1962&rootTags[]=Open%20Play"
 
 	allEvents := []vb.Event{}
