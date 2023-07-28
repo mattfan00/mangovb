@@ -15,7 +15,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -68,7 +68,9 @@ func main() {
 	scraper := scraper.New(eventStore, scraperLogger)
 	notifier := notifier.New(bot, eventStore, eventNotifStore, notifierLogger)
 
-	c := cron.New()
+	c := cron.New(cron.WithChain(
+		cron.SkipIfStillRunning(cron.DefaultLogger),
+	))
 	c.AddFunc(viper.GetString("cron_scrape"), func() {
 		scraperLogger.Infof("Started %s", SCRAPER_NAME)
 		defer logExecTime(SCRAPER_NAME, scraperLogger)()
