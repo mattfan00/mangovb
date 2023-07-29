@@ -96,7 +96,7 @@
 </script>
 
 <div>
-    <div class="mb-12 flex justify-between">
+    <div class="mb-12 flex justify-between items-center">
         <a href="/" class="text-2xl font-bold" style="font-family: avenir next;">
             mangovb
         </a>
