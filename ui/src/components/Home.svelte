@@ -124,23 +124,28 @@
             {/each}
         </MultiSelect>
     </div>
-    <div class="main-grid">
-        <div class="main-grid-header">Name</div>
-        <div class="main-grid-header">Location</div>
-        <div class="main-grid-header">Start time</div>
-        <div class="main-grid-header">Spots</div>
+    <div>
         {#each events as event}
-            <div><a class="text-blue-500" href={event.url} target="_blank" rel="noreferrer">{event.name}</a></div>
-            <div>{event.location}</div>
-            <div>{dayjs(event.startTime).format("MMM DD h:mm A")}</div>
-            {#if !event.isAvailable}
-                <div class="text-red-500">Filled</div>
-            {:else if  event.isAvailable && event.spotsLeft == 0}
-                <div>Available</div>
-            {:else}
-                <div>{event.spotsLeft}</div>
-            {/if}
-            <div class="col-span-full border-b border-solid border-gray-100"></div>
+        <div class="flex justify-between py-3 border-b">
+            <div class="flex flex-col mr-4 flex-1 overflow-hidden w-full">
+                <a href={event.url} target="_blank" rel="noreferrer" class="font-bold hover:underline">{event.name}</a>
+                <div class="whitespace-nowrap text-ellipsis overflow-hidden">{event.location}</div> 
+                <div>{dayjs(event.startTime).format("ddd, MMM DD h:mm A")}</div>
+            </div>
+            <div class="flex flex-col items-end flex-none">
+                <div>
+                    {#if !event.isAvailable}
+                        <div class="px-1.5 py-0.5 rounded text-red-600 bg-red-100 ">
+                            Filled
+                        </div>
+                    {:else}
+                        <div class="px-1.5 py-0.5 rounded text-green-600 bg-green-100 ">
+                            {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
         {/each}
     </div>
 </div>
