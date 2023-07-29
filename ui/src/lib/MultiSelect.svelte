@@ -15,6 +15,7 @@
         PopoverPanel,
         Transition,
     } from "@rgossiaux/svelte-headlessui";
+    import Button from "./Button.svelte"
 
     export let buttonText: string;
     export let value: unknown[];
@@ -40,9 +41,9 @@
 <Popover class="relative">
     <div class={$$props.class}>
         <PopoverButton 
-            class="rounded px-3 py-1.5 bg-gray-100 hover:bg-gray-200 transition-colors"
+            as="div"
         >
-            {buttonText}
+            <Button>{buttonText}</Button>
         </PopoverButton>
     </div>
     <Transition

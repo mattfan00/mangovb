@@ -4,8 +4,12 @@
     import type { Event, Filters } from "../types";
     import request from "../request";
     import { API_EVENTS_URL, API_FILTERS_URL } from "../constants";
-    import MultiSelect from "../lib/MultiSelect.svelte";
-    import MultiSelectItem from "../lib/MultiSelectItem.svelte";
+    import { 
+        MultiSelect,
+        MultiSelectItem,
+        Button,
+        DiscordIcon
+    } from "../lib";
 
     interface Selected {
         [key: string]: any[];
@@ -92,7 +96,21 @@
 </script>
 
 <div>
-    <div class="mb-6 flex">
+    <div class="mb-12 flex justify-between">
+        <a href="/" class="text-2xl font-bold" style="font-family: avenir next;">
+            mangovb
+        </a>
+        <Button 
+            type="discord" 
+            style="flex items-center" 
+            href="https://discord.gg/64eXMTeb9k"
+            target="_blank"
+        >
+            <DiscordIcon size={1.2}/>
+            <div class="ml-2"> Get alerts</div>
+        </Button>
+    </div>
+    <div class="mb-4 flex">
         <MultiSelect 
             buttonText="Source"
             value={selected.source}
@@ -129,8 +147,12 @@
         <div class="flex justify-between py-3 border-b">
             <div class="flex flex-col mr-4 flex-1 overflow-hidden w-full">
                 <a href={event.url} target="_blank" rel="noreferrer" class="font-bold hover:underline">{event.name}</a>
-                <div class="whitespace-nowrap text-ellipsis overflow-hidden">{event.location}</div> 
-                <div>{dayjs(event.startTime).format("ddd, MMM DD h:mm A")}</div>
+                <div class="whitespace-nowrap text-ellipsis overflow-hidden">
+                    {event.location}
+                </div>
+                <div>
+                    {dayjs(event.startTime).format("ddd, MMM DD h:mm A")}
+                </div>
             </div>
             <div class="flex flex-col items-end flex-none">
                 <div>
