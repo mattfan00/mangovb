@@ -157,13 +157,19 @@
             <div class="flex flex-col items-end flex-none">
                 <div>
                     {#if !event.isAvailable}
-                        <div class="px-1.5 py-0.5 rounded text-red-600 bg-red-100 ">
+                        <div class="px-1.5 py-0.5 rounded text-red-600 bg-red-100">
                             Filled
                         </div>
                     {:else}
-                        <div class="px-1.5 py-0.5 rounded text-green-600 bg-green-100 ">
-                            {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
-                        </div>
+                        {#if event.spotsLeft < 5 && event.spotsLeft != 0}
+                            <div class="px-1.5 py-0.5 rounded text-amber-600 bg-amber-100">
+                                {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
+                            </div>
+                        {:else}
+                            <div class="px-1.5 py-0.5 rounded text-green-600 bg-green-100">
+                                {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
+                            </div>
+                        {/if}
                     {/if}
                 </div>
             </div>
