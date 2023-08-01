@@ -4,8 +4,12 @@
     import type { Event, Filters } from "../types";
     import request from "../request";
     import { API_EVENTS_URL, API_FILTERS_URL } from "../constants";
-    import MultiSelect from "../lib/MultiSelect.svelte";
-    import MultiSelectItem from "../lib/MultiSelectItem.svelte";
+    import { 
+        MultiSelect,
+        MultiSelectItem,
+        Button,
+        DiscordIcon
+    } from "../lib";
 
     interface Selected {
         [key: string]: any[];
@@ -92,7 +96,21 @@
 </script>
 
 <div>
-    <div class="mb-6 flex">
+    <div class="mb-12 flex justify-between items-center">
+        <a href="/" class="text-2xl font-bold" style="font-family: avenir next;">
+            mangovb
+        </a>
+        <Button 
+            type="discord" 
+            style="flex items-center" 
+            href="https://discord.gg/64eXMTeb9k"
+            target="_blank"
+        >
+            <DiscordIcon size={1.2}/>
+            <div class="ml-2"> Get alerts</div>
+        </Button>
+    </div>
+    <div class="mb-4 flex">
         <MultiSelect 
             buttonText="Source"
             value={selected.source}
@@ -124,23 +142,38 @@
             {/each}
         </MultiSelect>
     </div>
-    <div class="main-grid">
-        <div class="main-grid-header">Name</div>
-        <div class="main-grid-header">Location</div>
-        <div class="main-grid-header">Start time</div>
-        <div class="main-grid-header">Spots</div>
+    <div>
         {#each events as event}
-            <div><a class="text-blue-500" href={event.url} target="_blank" rel="noreferrer">{event.name}</a></div>
-            <div>{event.location}</div>
-            <div>{dayjs(event.startTime).format("MMM DD h:mm A")}</div>
-            {#if !event.isAvailable}
-                <div class="text-red-500">Filled</div>
-            {:else if  event.isAvailable && event.spotsLeft == 0}
-                <div>Available</div>
-            {:else}
-                <div>{event.spotsLeft}</div>
-            {/if}
-            <div class="col-span-full border-b border-solid border-gray-100"></div>
+        <div class="flex justify-between py-3 border-b">
+            <div class="flex flex-col mr-4 flex-1 overflow-hidden w-full">
+                <a href={event.url} target="_blank" rel="noreferrer" class="font-bold hover:underline">{event.name}</a>
+                <div class="whitespace-nowrap text-ellipsis overflow-hidden">
+                    {event.location}
+                </div>
+                <div>
+                    {dayjs(event.startTime).format("ddd, MMM DD h:mm A")}
+                </div>
+            </div>
+            <div class="flex flex-col items-end flex-none">
+                <div>
+                    {#if !event.isAvailable}
+                        <div class="px-1.5 py-0.5 rounded text-red-600 bg-red-100">
+                            Filled
+                        </div>
+                    {:else}
+                        {#if event.spotsLeft < 5 && event.spotsLeft != 0}
+                            <div class="px-1.5 py-0.5 rounded text-amber-600 bg-amber-100">
+                                {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
+                            </div>
+                        {:else}
+                            <div class="px-1.5 py-0.5 rounded text-green-600 bg-green-100">
+                                {event.spotsLeft == 0 ? 'Available' : `${event.spotsLeft} spot${event.spotsLeft > 1 ? 's' : ''}`}
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+            </div>
+        </div>
         {/each}
     </div>
 </div>
