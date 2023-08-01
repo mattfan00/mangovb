@@ -1,9 +1,11 @@
-name: build
+name: ui-build
 
 on:
   push:
     branches:
       main
+    paths:
+      - 'ui/**'
 
 jobs:
   build:
@@ -21,7 +23,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./docker/scraper/Dockerfile
+          context: ./ui
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb-scraper:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb-ui:latest
