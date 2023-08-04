@@ -1,4 +1,4 @@
-name: scraper-build
+name: api-build
 
 on:
   push:
@@ -24,6 +24,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./cmd/scraper/Dockerfile
+          file: ./cmd/api/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb-scraper:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mangovb-api:latest
