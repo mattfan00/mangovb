@@ -16,12 +16,15 @@ func (a *Api) routes() *chi.Mux {
 	r := chi.NewRouter()
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedOrigins: []string{
+			"http://localhost:5173",
+		},
 	})
 	r.Use(c.Handler)
 
 	r.Get("/events", a.getEvents)
 	r.Get("/filters", a.getFilters)
+	r.Get("/healthcheck", a.healthcheck)
 
 	return r
 }
@@ -99,4 +102,8 @@ func (a *Api) getFilters(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, http.StatusOK, res)
+}
+
+func (a *Api) healthcheck(w http.ResponseWriter, r *http.Request) {
+	render(w, http.StatusOK, "ok")
 }
