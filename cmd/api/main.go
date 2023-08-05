@@ -14,6 +14,7 @@ import (
 
 func main() {
 	configPath := flag.String("c", "./config.yaml", "path to config file")
+	port := flag.Int("p", 8080, "port")
 	flag.Parse()
 
 	conf, err := config.ReadFile(*configPath)
@@ -35,5 +36,5 @@ func main() {
 	eventStore := store.NewEventStore(db)
 
 	a := api.New(apiLogger, eventStore)
-	a.Start()
+	a.Start(*port)
 }
