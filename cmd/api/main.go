@@ -35,6 +35,6 @@ func main() {
 
 	eventStore := store.NewEventStore(db)
 
-	a := api.New(apiLogger, eventStore)
+	a := api.New(apiLogger, eventStore, conf)
 	a.Start(*port)
 }

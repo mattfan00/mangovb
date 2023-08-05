@@ -29,3 +29,7 @@ func ReadFile(src string) (*Config, error) {
 
 	return conf, nil
 }
+
+func (c *Config) IsProd() bool {
+    return c.Env == "prod"
+}

@@ -19,9 +19,7 @@ func (a *Api) routes() *chi.Mux {
 	r := chi.NewRouter()
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:5173",
-		},
+		AllowedOrigins: a.getAllowedOrigins(),
 	})
 	r.Use(c.Handler)
 
@@ -33,6 +31,18 @@ func (a *Api) routes() *chi.Mux {
 	r.Get("/healthcheck", a.healthcheck)
 
 	return r
+}
+
+func (a *Api) getAllowedOrigins() []string {
+    if a.config.IsProd() {
+        return []string{
+            "https://www.mangovb.com",
+        }
+    } else {
+        return []string{
+			"http://localhost:5173",
+        }
+    }
 }
 
 func (a *Api) logRequestMiddleware(next http.Handler) http.Handler {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mattfan00/mangovb/internal/store"
+	configPkg "github.com/mattfan00/mangovb/pkg/config"
 
 	"github.com/sirupsen/logrus"
 )
@@ -12,12 +13,14 @@ import (
 type Api struct {
 	logger     *logrus.Entry
 	eventStore *store.EventStore
+	config     *configPkg.Config
 }
 
-func New(logger *logrus.Entry, eventStore *store.EventStore) *Api {
+func New(logger *logrus.Entry, eventStore *store.EventStore, config *configPkg.Config) *Api {
 	return &Api{
 		logger:     logger,
 		eventStore: eventStore,
+		config:     config,
 	}
 }
 
