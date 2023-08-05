@@ -34,15 +34,15 @@ func (a *Api) routes() *chi.Mux {
 }
 
 func (a *Api) getAllowedOrigins() []string {
-    if a.config.IsProd() {
-        return []string{
-            "https://www.mangovb.com",
-        }
-    } else {
-        return []string{
+	if a.config.IsProd() {
+		return []string{
+			"https://www.mangovb.com",
+		}
+	} else {
+		return []string{
 			"http://localhost:5173",
-        }
-    }
+		}
+	}
 }
 
 func (a *Api) logRequestMiddleware(next http.Handler) http.Handler {
@@ -52,7 +52,7 @@ func (a *Api) logRequestMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			a.logger.WithFields(logrus.Fields{
 				"method":   r.Method,
-				"path":     r.URL,
+				"path":     r.URL.Path,
 				"from":     r.RemoteAddr,
 				"duration": time.Since(t1),
 			}).Info("received request")
