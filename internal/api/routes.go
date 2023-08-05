@@ -4,29 +4,62 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	vb "github.com/mattfan00/mangovb"
 	"github.com/mattfan00/mangovb/internal/store"
 	"github.com/mattfan00/mangovb/pkg/util"
 	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
 )
 
 func (a *Api) routes() *chi.Mux {
 	r := chi.NewRouter()
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:5173",
-		},
+		AllowedOrigins: a.getAllowedOrigins(),
 	})
 	r.Use(c.Handler)
+
+	r.Use(a.logRequestMiddleware)
+	r.Use(middleware.Recoverer)
 
 	r.Get("/events", a.getEvents)
 	r.Get("/filters", a.getFilters)
 	r.Get("/healthcheck", a.healthcheck)
 
 	return r
+}
+
+func (a *Api) getAllowedOrigins() []string {
+    if a.config.IsProd() {
+        return []string{
+            "https://www.mangovb.com",
+        }
+    } else {
+        return []string{
+			"http://localhost:5173",
+        }
+    }
+}
+
+func (a *Api) logRequestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		t1 := time.Now()
+		defer func() {
+			a.logger.WithFields(logrus.Fields{
+				"method":   r.Method,
+				"path":     r.URL,
+				"from":     r.RemoteAddr,
+				"duration": time.Since(t1),
+			}).Info("received request")
+		}()
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func parseQuery(query string) []int {
