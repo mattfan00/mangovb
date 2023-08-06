@@ -146,7 +146,7 @@
         {#each events as event}
         <div class="flex justify-between py-3 border-b">
             <div class="flex flex-col mr-4 flex-1 overflow-hidden w-full">
-                <a href={event.url} target="_blank" rel="noreferrer" class="font-bold hover:underline">{event.name}</a>
+                <a href={event.url} target="_blank" rel="noreferrer" class="font-bold">{event.name}</a>
                 <div class="whitespace-nowrap text-ellipsis overflow-hidden">
                     {event.location}
                 </div>

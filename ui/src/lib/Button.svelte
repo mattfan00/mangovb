@@ -8,7 +8,7 @@
 
     let classname = classnames(
         "rounded transition-colors px-3 py-1.5",
-        { "border border-gray-200 hover:bg-gray-100": type === "default" },
+        { "border border-gray-200 hover:bg-gray-100 active:bg-gray-200": type === "default" },
         { "bg-[#5865F2] text-white": type === "discord" },
         style,
     );

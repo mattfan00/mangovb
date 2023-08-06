@@ -33,7 +33,7 @@
 
 <li 
     bind:this={element}
-    class="flex items-center whitespace-nowrap px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer select-none"
+    class="flex items-center whitespace-nowrap px-2 py-1 rounded hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer select-none"
     role="option" 
     tabindex="0" 
     aria-selected={selected}
